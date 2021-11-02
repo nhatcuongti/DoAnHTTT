@@ -39,3 +39,47 @@ CREATE TABLE ChiNhanh(
   DoanhSoBan MONEY,
   PRIMARY KEY(MaChiNhanh, MaDoanhNghiep)
   )
+  create table KhachHang 
+(
+	MaKH 	varchar(50) not null,
+	HoTen 	nvarchar(100),
+	SDT 	varchar(10),
+	DiaChi 	varchar(50),
+	Email 	datetime,
+	primary key (MaKH)	
+)
+
+create table TKKhachHang
+(
+	ID 	varchar(50) NOT NULL,
+	MK nvarchar(30) NOT NULL,
+	TrangThai int,
+	MaKH varchar(50),
+	primary key (ID)
+)
+create table DH_KH
+(
+	MaDH varchar(50) not null,
+	MaKH varchar(50) not null,
+	primary key (MaDH, MaKH)
+)
+create table TX_DH
+(
+	MaTX varchar(50) not null,
+	MaDH varchar(50) not null,
+	primary key (MaDH, MaTX)
+)
+
+create table DonHang
+(
+	MaDH varchar(50) not null,
+	PhiVanChuyen  float,
+	TinhTrang  int,
+	HinhThucThanhToan  int,
+	PhiSanPham  float,
+	NgayDat Datetime,
+	MaChiNhanh varchar(5) not NULL,
+	MaDoanhNghiep varchar(50) not NULL,
+	primary key(MaDH)
+)
+  
