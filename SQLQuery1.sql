@@ -1,10 +1,10 @@
 USE MASTER
 GO
 
-CREATE DATABASE TMP4
+CREATE DATABASE Nhom18_DoAnThucHanh_19HTTT2
 GO
 
-Use TMP4
+Use Nhom18_DoAnThucHanh_19HTT2
 go
 
 CREATE TABLE SANPHAM(
@@ -141,16 +141,17 @@ GO
 create table DonHang
 (
 	MaDH varchar(50) not null,
-	PhiVanChuyen  float,
+	PhiVanChuyen  smallmoney,
 	TinhTrang  int CHECK (0 <= TINHTRANG AND TINHTRANG <= 2),
 	HinhThucThanhToan  int CHECK (0 <= HINHTHUCTHANHTOAN AND HINHTHUCTHANHTOAN <= 1),
-	PhiSanPham  float,
+	PhiSanPham  smallmoney,
 	NgayDat Datetime,
 	MaChiNhanh varchar(5) not NULL,
 	MaDoanhNghiep varchar(50) not NULL,
 	primary key(MaDH)
 )
 GO
+
 
 CREATE TABLE NHANVIEN(
 	MANV VARCHAR(10) NOT NULL,
