@@ -1,4 +1,10 @@
-Ràng buộc 1: số lượng đơn hàng(bảng doanh nghiệp) =  tổng doanh số bán của toàn bộ chi nhánh doanh nghiệp
-Ràng buộc 2: Số chi nhánh đăng ký 1 doanh nghiệp = tổng số chi nhánh của doanh nghiệp đó trong bảng hợp đồng đăng ký
-Ràng buộc 3: Phí sản phẩm = tổng đơn hàng sản phẩm ( số lượng * giá 1 sản phẩm)
-Ràng buộc 4: Khu vực HD tài xế phải trùng chi nhánh mà khách hàng đặt 
+Ràng buộc 1: số lượng đơn hàng(bảng doanh nghiệp) =  Tổng số lượng các đơn hàng của các chi nhánh mà doanh nghiệp 
+đăng kí trong hợp đồng.
+Ràng buộc 2: SoChiNhanhDK trong HopDong = Số lượng Chi Nhánh trong bảng chi nhánh thuộc về HopDong .
+Ràng buộc 3 : DoanhSoBan của ChiNhanh = Tổng các PhiSanPham của các DonHang thuộc về ChiNhanh .
+Ràng buộc 4 : Một ChiNhanh phải có ít nhất một sản phẩm .
+Ràng buộc 5 : Một SanPham phải thuộc ít nhất một ChiNhanh
+Ràng buộc 6: Phí sản phẩm = tổng đơn hàng sản phẩm ( số lượng * giá 1 sản phẩm)
+Ràng buộc 7: Khu vực HD tài xế phải trùng chi nhánh mà khách hàng đặt 
+Ràng buộc 8:  Địa chỉ Chi Nhánh( MaDoanhNghiep, MaChinhanh) trong DonHang và KhuVucHD của TaiXe trong DonHang phải giống
+Ràng buộc 9: Chi Nhánh trong DonHang phải là ChiNhanh đã được đăng kí trong HopDong
