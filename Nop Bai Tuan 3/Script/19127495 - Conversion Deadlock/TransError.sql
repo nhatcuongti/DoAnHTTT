@@ -13,7 +13,7 @@ values('nhatcuongti', '123456', 1, 'NV01')
 
 
 --Đổi mật khẩu
-alter PROC DoiMatKhau
+CREATE PROC DoiMatKhau
 	@ID varchar(50),
 	@MKMoi varchar(50)
 AS

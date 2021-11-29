@@ -1,8 +1,8 @@
 ﻿Use Nhom18_DoAnThucHanh
 Go
 
-SELECT * FROM ChiNhanh
-GO
+Select * from TKNHANVIEN
+select * from NHANVIEN
 
-EXEC XoaChiNhanh 'CN01', 'MST01'
+EXEC DoiMatKhau'nhatcuongti', '123'
 GO
