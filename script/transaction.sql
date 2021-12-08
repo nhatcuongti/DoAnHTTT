@@ -1,0 +1,460 @@
+﻿+﻿--Them Chi Nhanh ; Rang Buoc :2
+create PROC INSERT_CHINHANH
+	@MACHINHANH VARCHAR(5),
+	@MADOANHNGHIEP VARCHAR(50),
+	@DIACHI NVARCHAR(200),
+	@DOANHSOBAN MONEY,
+	@MAHOPDONG VARCHAR(50)
+AS
+BEGIN TRANSACTION
+	BEGIN TRY
+		--Kiểm tra @MaDoanhNghiep có tồn tại hay không ?
+		if (NOT EXISTS(Select * from DoanhNghiep dn where @MADOANHNGHIEP = dn.MaSoThue ))
+		Begin
+			Print N'Không tồn tại mã doanh nghiệp'
+			ROLLBACK TRANSACTION
+			RETURN
+		End	
+
+		--Kiểm tra @DOANHSOBAN != 0 hay không ?
+		if (@DOANHSOBAN != 0)
+		Begin
+			Print N'Doanh số bán phải nhập liệu là 0 !!'
+			ROLLBACK TRANSACTION
+			RETURN
+		End	
+
+		--Xử lí ràng buộc 2 . Nếu @MaHopDong != NULL thì tăng SoChiNhanhDK lên 1 
+		if (@MAHOPDONG IS NOT NULL)
+		Begin
+			update HopDong 
+			SET SoChiNhanhDK = SoChiNhanhDK + 1
+			WHERE MAHD = @MAHOPDONG 
+		End	
+
+	INSERT INTO CHINHANH
+	VALUES(@MACHINHANH, @MADOANHNGHIEP, @DIACHI, @DOANHSOBAN, @MAHOPDONG);
+
+		
+	END TRY
+	BEGIN CATCH
+		PRINT N'Lỗi hệ thống'
+		ROLLBACK TRANSACTION
+	END CATCH
+
+COMMIT TRANSACTION
+GO
+
+--DELETE CINHANH TRANSACTION , Ràng buộc :  2
+
+create PROC DELETE_CHINHANH
+	@MACHINHANH VARCHAR(5),
+	@MADOANHNGHIEP VARCHAR(50)
+AS
+BEGIN TRANSACTION
+	BEGIN TRY
+		--Kiểm tra chi nhánh có tồn tại hay không
+		if (not exists(select * from ChiNhanh cn where cn.MaChiNhanh = @MACHINHANH and cn.MaDoanhNghiep = @MADOANHNGHIEP))
+		BEGIN
+			print N'Chi nhánh không tồn tại'
+			ROLLBACK TRANSACTION
+			RETURN
+		END		
+		
+		--Xử lí ràng buộc 
+		UPDATE HOPDONG
+		SET SoChiNhanhDK = SoChiNhanhDK - 1
+		WHERE MaHD = (SELECT MAHOPDONG FROM CHINHANH CN WHERE CN.MaDoanhNghiep = @MADOANHNGHIEP AND CN.MaChiNhanh = @MACHINHANH) 
+
+		DELETE ChiNhanh
+		WHERE MaChiNhanh = @MACHINHANH AND @MADOANHNGHIEP = MaDoanhNghiep
+		
+	END TRY
+	BEGIN CATCH
+		PRINT N'Lỗi hệ thống'
+		ROLLBACK TRANSACTION
+	END CATCH
+
+COMMIT TRANSACTION
+GO
++create proc insertDoanhNghiep
+	@MaSoThue varchar(50),
+	@LoaiHang varchar(100),
+	@DiaChiKinhDoanh varchar(500),
+	@Quan varchar(50),
+	@ThanhPho varchar(50),
+	@TenDoanhNghiep varchar(100),
+	@SoDT varchar(15),
+	@Email varchar(50),
+	@SLDonHang int
+as
+begin transaction
+	begin try
+		if @SLDonHang != 0
+		begin 
+			print 'Don hang phai bang 0'
+			rollback transaction
+			return
+		end
+	END TRY
+	BEGIN CATCH
+		print 'Loi insert Doanh nghiep'
+		rollback transaction
+	END CATCH
+	INSERT INTO DoanhNghiep(MaSoThue,LoaiHang,DiaChiKinhDoanh,QUAN,ThanhPho,TenDoanhNghiep,SoDT,Email,SLDonHang)
+	VALUES (@MaSoThue,@LoaiHang,@DiaChiKinhDoanh,@QUAN,@ThanhPho,@TenDoanhNghiep,@SoDT,@Email,@SLDonHang);
+	COMMIT TRANSACTION
+GO
+
+--Update DoanhNghiep_SLDonHang(newDonHang)
+--		RB:1
+create proc updateSLDonHangDoanhNghiep
+	@MaSoThue varchar(50) ,
+	@SLDonHang int
+as
+begin transaction
+	begin try
+		if not exists (select * from DoanhNghiep dn where dn.MaSoThue = @MaSoThue)
+		begin
+			print 'khong ton tai doanh nghiep tren'
+			rollback transaction
+			return
+		end
+		if (select count(*) from hopdong hd join ChiNhanh cn on hd.MaHD = cn.MAHOPDONG 
+			join DonHang dh on dh.MaChiNhanh = cn.MaChiNhanh and cn.MADOANHNGHIEP = dh.MADOANHNGHIEP) != @SLDonHang
+		begin 
+			print 'So luong don hang cua doanh nghiep khac tong so luong don hang'
+			rollback transaction
+			return
+		end
+	END TRY
+	BEGIN CATCH
+		print 'Loi insert Doanh nghiep'
+		rollback transaction
+	END CATCH
+	UPDATE DoanhNghiep
+	SET SLDonHang = @SLDonHang
+	WHERE MaSoThue = @MaSoThue;
+	COMMIT TRANSACTION
+GO
+
+--Insert DonHang()
+--	RB:1, 3,6,7,8
+create proc insertDonHang
+	@MaDH varchar(50) ,
+	@PhiVanChuyen  smallmoney,
+	@TinhTrang  int,
+	@HinhThucThanhToan  int ,
+	@PhiSanPham  smallmoney,
+	@NgayDat Datetime,
+	@MaChiNhanh varchar(5) ,
+	@MaDoanhNghiep varchar(50) ,
+	@MaKhachHang varchar(50) ,
+	@MaTX varchar(50)
+as
+begin transaction
+	begin try
+		if not exists (select * from ChiNhanh cn where cn.MaChiNhanh = @MaChiNhanh and cn.MaDoanhNghiep = @MaDoanhNghiep)
+		begin 
+			print 'khong ton tai ma chi nhanh tren trong ma doanh nghiep tren'
+			rollback transaction
+			return
+		end
+		if not exists (select * from KhachHang kh where @MaKhachHang = kh.MaKH)
+		begin 
+			print 'khong ton tai ma khach hang tren'
+			rollback transaction
+			return
+		end
+		if not exists (select * from TAIXE tx where @MaTX = tx.MATX)
+		begin 
+			print 'khong ton tai ma tai xe tren'
+			rollback transaction
+			return
+		end
+		if (select tx.KHUVUCHD from TAIXE tx where tx.MATX = @MaTX) != (select cn.DiaChi from ChiNhanh Cn where cn.MaChiNhanh = @MaChiNhanh And cn.MaDoanhNghiep = @MaDoanhNghiep)
+		begin 
+			print 'Dia chi chi nhanh trong don hang va khu vuc hoat dong tai xe khong khop'
+			rollback transaction
+			return
+		end
+		if not exists (select *  from ChiNhanh Cn where cn.MaChiNhanh = @MaChiNhanh And cn.MaDoanhNghiep = @MaDoanhNghiep and cn.MAHOPDONG Is not null)
+		begin 
+			print 'Dia chi chi nhanh chua duong dang ky dich vu'
+			rollback transaction
+			return
+		end
+		
+	END TRY
+	BEGIN CATCH
+		print 'Loi insert Don Hang'
+		rollback transaction
+	END CATCH
+	INSERT INTO donhang(MaDH,PhiVanChuyen,TinhTrang,HinhThucThanhToan,PhiSanPham,NgayDat,MaChiNhanh,MaDoanhNghiep,makh,MaTX)
+	VALUES (@MaDH,@PhiVanChuyen,@TinhTrang,@HinhThucThanhToan,@PhiSanPham,@NgayDat,@MaChiNhanh,@MaDoanhNghiep,@MaKhachHang,@MaTX);
+
+	UPDATE DoanhNghiep
+	SET SLDonHang = SLDonHang + 1
+	WHERE MaSoThue = @MaDoanhNghiep;
+
+	UPDATE ChiNhanh
+	SET DoanhSoBan = DoanhSoBan + @PhiSanPham
+	WHERE MaDoanhNghiep = @MaDoanhNghiep and MaChiNhanh = @MaChiNhanh ;
+
+	COMMIT TRANSACTION
+GO
+--Delete DonHang()
+--		RB 1, 3
+create proc deleteDonHang
+	@MaDH varchar(50)
+as
+begin transaction
+	begin try	
+		if not exists (select * from donhang dh where dh.MaDH = @MaDH)
+		begin 
+			print 'khong ton tai don hang tren'
+			rollback transaction
+			return
+		end
+	END TRY
+	BEGIN CATCH
+		print 'Loi delete Don Hang'
+		rollback transaction
+	END CATCH
+	declare @phisanpham smallmoney;
+	set @phisanpham = (select dh.PhiSanPham from donhang dh where dh.MaDH = @MaDH)
+
+	declare @MaSoThue varchar(50);
+	Set @MaSoThue = (select dh.MaDoanhNghiep from DonHang Dh where dh.MaDH = @MaDH)
+
+	declare @machinhanh varchar(5);
+	Set @machinhanh = (select dh.MaChiNhanh from DonHang Dh where dh.MaDH = @MaDH)
+
+	UPDATE ChiNhanh
+	SET DoanhSoBan = DoanhSoBan - @phisanpham
+	WHERE MaDoanhNghiep = @MaSoThue and MaChiNhanh = @machinhanh;
+
+	DELETE FROM DonHang WHERE madh = @MaDH;
+
+	COMMIT TRANSACTION
+go
+
+--Update DonHang_MaChiNhanh(new MaChiNhanh)
+--		RB:3,7,8
+create proc updateDonHangMaChiNhanh
+	@MaDH varchar(50),
+	@MaChiNhanhMoi varchar(5) 
+as
+begin transaction
+	begin try
+		if not exists (select * from donhang dh where dh.MaDH = @MaDH)
+		begin 
+			print 'khong ton tai don hang tren'
+			rollback transaction
+			return
+		end
+	END TRY
+	BEGIN CATCH
+		print 'Loi update Don Hang Ma Chi Nhanh'
+		rollback transaction
+	END CATCH
+	declare @MaDoanhNghiepCu varchar(50)
+	declare @MaChiNhanhCu varchar(5)
+	declare @phisanpham smallmoney
+
+	set @MaChiNhanhCu = (select dh.MaChiNhanh from DonHang Dh where dh.MaDH = @MaDH)
+	set @MaDoanhNghiepCu = (select dh.MaDoanhNghiep from DonHang Dh where dh.MaDH = @MaDH)
+	set @phisanpham = (select dh.PhiSanPham from DonHang Dh where dh.MaDH = @MaDH)
+
+	if not exists (select * from ChiNhanh cn where cn.MaChiNhanh = @MaChiNhanhMoi and cn.MaDoanhNghiep = @MaDoanhNghiepCu)
+		begin 
+			print 'khong ton tai ma chi nhanh cua doanh nghiep tren tren tren'
+			rollback transaction
+			return
+		end
+
+	if (select tx.KHUVUCHD from TAIXE tx join DonHang Dh on dh.matx = tx.MATX where dh.MaDH = @MaDH) != (select cn.DiaChi from ChiNhanh Cn where cn.MaChiNhanh = @MaChiNhanhMoi And cn.MaDoanhNghiep = @MaDoanhNghiepCu)
+	begin 
+		print 'Dia chi chi nhanh trong don hang va khu vuc hoat dong tai xe khong khop'
+		rollback transaction
+		return
+	end
+
+	if not exists (select *  from ChiNhanh Cn where cn.MaChiNhanh = @MaChiNhanhMoi And cn.MaDoanhNghiep = @MaDoanhNghiepCu and cn.MAHOPDONG Is not null)
+	begin 
+		print 'Chinh nhanh chua duoc dang ky dich vu'
+		rollback transaction
+		return
+	end
+	-- update chi nhanh cu
+	UPDATE ChiNhanh
+	SET DoanhSoBan = DoanhSoBan - @phisanpham
+	WHERE MaChiNhanh = @MaChiNhanhCu and MaDoanhNghiep = @MaDoanhNghiepCu;
+	-- update chi nhanh moi
+	UPDATE ChiNhanh
+	SET DoanhSoBan = DoanhSoBan - @phisanpham
+	WHERE MaChiNhanh = @MaChiNhanhMoi and MaDoanhNghiep = @MaDoanhNghiepCu;
+
+	UPDATE DonHang
+	SET MaChiNhanh = @MaChiNhanhMoi
+	WHERE madh = @madh;
+	COMMIT TRANSACTION
+GO
+
+---Update DonHang_MaDoanhNghiep(New MaDoanhNghiep)
+--		RB:3,7,8
+
+create proc updateDonHangMaDoanhNghiep
+	@MaDH varchar(50),
+	@MaDoanhNghiepMoi varchar(50) 
+as
+begin transaction
+	begin try
+		if not exists (select * from donhang dh where dh.MaDH = @MaDH)
+		begin 
+			print 'khong ton tai don hang tren'
+			rollback transaction
+			return
+		end
+	END TRY
+	BEGIN CATCH
+		print 'Loi update Don hang Ma Doanh Nghiep'
+		rollback transaction
+	END CATCH
+	declare @MaDoanhNghiepCu varchar(50)
+	declare @MaChiNhanhCu varchar(5)
+	declare @phisanpham smallmoney
+
+	set @MaChiNhanhCu = (select dh.MaChiNhanh from DonHang Dh where dh.MaDH = @MaDH)
+	set @MaDoanhNghiepCu = (select dh.MaDoanhNghiep from DonHang Dh where dh.MaDH = @MaDH)
+	set @phisanpham = (select dh.PhiSanPham from DonHang Dh where dh.MaDH = @MaDH)
+
+	if not exists (select * from ChiNhanh cn where cn.MaChiNhanh = @MaChiNhanhCu and cn.MaDoanhNghiep = @MaDoanhNghiepMoi)
+		begin 
+			print 'khong ton tai ma chi nhanh cua doanh nghiep tren tren tren'
+			rollback transaction
+			return
+		end
+
+	if (select tx.KHUVUCHD from TAIXE tx join DonHang Dh on dh.matx = tx.MATX where dh.MaDH = @MaDH) != (select cn.DiaChi from ChiNhanh Cn 
+	where cn.MaChiNhanh = @MaChiNhanhCu And cn.MaDoanhNghiep = @MaDoanhNghiepMoi)
+	begin 
+		print 'Dia chi chi nhanh trong don hang va khu vuc hoat dong tai xe khong khop'
+		rollback transaction
+		return
+	end
+
+	if not exists (select *  from ChiNhanh Cn where cn.MaChiNhanh = @MaChiNhanhCu 
+	And cn.MaDoanhNghiep = @MaDoanhNghiepMoi and cn.MAHOPDONG Is not null)
+	begin 
+		print 'Chinh nhanh chua duoc dang ky dich vu'
+		rollback transaction
+		return
+	end
+	-- update chi nhanh cu doanh nghiep cu
+	UPDATE ChiNhanh
+	SET DoanhSoBan = DoanhSoBan - @phisanpham
+	WHERE MaChiNhanh = @MaChiNhanhCu and MaDoanhNghiep = @MaDoanhNghiepCu;
+	-- update chi nhanh cu doanh nghiep moi
+	UPDATE ChiNhanh
+	SET DoanhSoBan = DoanhSoBan - @phisanpham
+	WHERE MaChiNhanh = @MaChiNhanhCu and MaDoanhNghiep = @MaDoanhNghiepMoi;
+
+	-- update sl don hang doanh nghiep cu
+	UPDATE DoanhNghiep
+	SET SLDonHang = SLDonHang - 1
+	WHERE MaSoThue = @MaDoanhNghiepCu;
+
+	-- update sl don hang doanh nghiep moi
+	UPDATE DoanhNghiep
+	SET SLDonHang = SLDonHang + 1
+	WHERE MaSoThue = @MaDoanhNghiepMoi;
+	
+	UPDATE DonHang
+	SET MaDoanhNghiep = @MaDoanhNghiepMoi
+	WHERE madh = @madh;
+	COMMIT TRANSACTION
+GO
+
+--Updata DonHang_PhiSP(newPhiSP)
+--		RB: 3,6
+create proc updateDonHangPhiSanPham
+	@MaDH varchar(50) ,
+	@PhiSanPhamMoi smallmoney
+as
+begin transaction
+	begin try
+		if not exists (select * from donhang dh where dh.MaDH = @MaDH)
+		begin 
+			print 'khong ton tai don hang tren'
+			rollback transaction
+			return
+		end
+
+		--------
+		--------- kiem tra tong bill = Tong gia chi tiet san pham !!!
+		--------
+	END TRY
+	BEGIN CATCH
+		print 'Loi update Don Hang Phi San Pham'
+		rollback transaction
+	END CATCH
+	declare @MaDoanhNghiep varchar(50)
+	declare @MaChiNhanh varchar(5)
+	declare @PhiSanPhamCu smallmoney
+
+	set @MaChiNhanh = (select dh.MaChiNhanh from DonHang Dh where dh.MaDH = @MaDH)
+	set @MaDoanhNghiep= (select dh.MaDoanhNghiep from DonHang Dh where dh.MaDH = @MaDH)
+	set @PhiSanPhamCu = (select dh.PhiSanPham from DonHang Dh where dh.MaDH = @MaDH)
+
+	-- update chi nhanh cu doanh nghiep cu
+	UPDATE ChiNhanh
+	SET DoanhSoBan = DoanhSoBan - @PhiSanPhamCu + @PhiSanPhamMoi
+	WHERE MaChiNhanh = @MaChiNhanh and MaDoanhNghiep = @MaDoanhNghiep;
+	
+	UPDATE DonHang
+	SET PhiSanPham = @PhiSanPhamMoi
+	WHERE madh = @madh;
+	COMMIT TRANSACTION
+GO
+
+--Update DonHang_MaTX(newMaTX)
+--	RB:7 
+
+create proc updateDonHangMaTaiXe
+	@MaDH varchar(50) ,
+	@maTXMoi varchar(50)
+as
+begin transaction
+	begin try
+		if not exists (select * from donhang dh where dh.MaDH = @MaDH)
+		begin 
+			print 'khong ton tai don hang tren'
+			rollback transaction
+			return
+		end
+		if not exists (select * from TAIXE tx where tx.MATX = @maTXMoi)
+		begin 
+			print 'khong ton tai tai xe tren'
+			rollback transaction
+			return
+		end
+		if (select tx.KHUVUCHD from TAIXE Tx where tx.MATX = @maTXMoi) != 
+		(select cn.DiaChi from DonHang Dh join ChiNhanh cn on cn.MaChiNhanh = dh.MaChiNhanh And cn.MaDoanhNghiep = dh.MaDoanhNghiep 
+		where dh.MaDH = @MaDH)
+		begin 
+			print 'khu vuc hoat dong cua tai xe khong khop voi dia chi cua chi nhanh'
+			rollback transaction
+			return
+		end
+	END TRY
+	BEGIN CATCH
+		print 'Loi insert don hang ma tai xe'
+		rollback transaction
+	END CATCH
+
+	UPDATE DonHang
+	SET MaTX = @maTXMoi
+	WHERE madh = @madh;
+	COMMIT TRANSACTION
+GO
