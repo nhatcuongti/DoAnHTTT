@@ -45,7 +45,7 @@ BEGIN TRANSACTION
 COMMIT TRANSACTION
 GO
 
---DELETE CINHANH TRANSACTION , Ràng buộc :  2
+--DELETE ChINHANH TRANSACTION , Ràng buộc :  2
 
 create PROC DELETE_CHINHANH
 	@MACHINHANH VARCHAR(5),
@@ -77,7 +77,8 @@ BEGIN TRANSACTION
 
 COMMIT TRANSACTION
 GO
-+create proc insertDoanhNghiep
+  --
+create proc insertDoanhNghiep
 	@MaSoThue varchar(50),
 	@LoaiHang varchar(100),
 	@DiaChiKinhDoanh varchar(500),
@@ -458,3 +459,583 @@ begin transaction
 	WHERE madh = @madh;
 	COMMIT TRANSACTION
 GO
+
+--Update DoanhSoBan o table ChiNhanh
+
+create proc Update_ChiNhanh_DoanhSoBan
+	@MaChiNhanh varchar(5),
+	@maDoanhNghiep varchar(50),
+	@DoanhSoBan money
+AS
+BEGIN TRANSACTION
+	BEGIN TRY
+		--Kiểm tra chi nhánh có tồn tại hay không
+		if (not exists(select * from ChiNhanh where MaChiNhanh = @MaChiNhanh and MaDoanhNghiep = @maDoanhNghiep))
+		BEGIN
+			print N'Chi nhánh không tồn tại'
+			ROLLBACK TRANSACTION
+			RETURN
+		END	
+
+		--Kiểm tra Doanh số bán có phải là số dương
+		if (@DoanhSoBan < 0)
+		BEGIN
+			print N'Doanh số bán âm'
+			ROLLBACK TRANSACTION
+			RETURN
+		END			
+
+		--Kiểm tra DoanhSoBan có bằng với DoanhSoBan hiện tại ?
+		if (not exists(select * from ChiNhanh where MaChiNhanh = @MaChiNhanh and MaDoanhNghiep = @maDoanhNghiep and @DoanhSoBan = DoanhSoBan))
+		BEGIN
+			print N'Doanh số bán được cập nhật không hợp lí'
+			ROLLBACK TRANSACTION
+			RETURN
+		END		
+	END TRY
+	BEGIN CATCH
+		PRINT N'Lỗi hệ thống'
+		ROLLBACK TRANSACTION
+	END CATCH	
+COMMIT TRANSACTION
+GO
+
+create PROC INSERT_HOPDONG
+	@MAHD VARCHAR(50),
+	@NGUOIDAIDIEN NVARCHAR(50),
+	@SOCHINHANHDK INT,
+	@HIEULUC INT,
+	@PHANTRAMHH FLOAT,
+	@NGAYBATDAU DATE,
+	@MADOANHNGHIEP VARCHAR(50)
+AS
+BEGIN TRANSACTION
+	BEGIN TRY
+		--Kiểm tra MaHD đã tồn tại chưa
+		if (exists(select * from hopdong where @mahd = MaHD))
+		begin
+			print N'Mã hợp đồng đã tồn tại !'
+			ROLLBACK TRANSACTION
+			RETURN
+		end		
+
+		--Kiểm tra Số Chi Nhánh DK có khác 0 hay không
+		if (@SOCHINHANHDK != 0)
+		begin
+			print N'Số chi nhánh khác 0 !'
+			ROLLBACK TRANSACTION
+			RETURN
+		end	
+
+		--PHANTRAMHH CÓ NẰM TRONG KHOẢNG (0, 1) HAY KHÔNG
+		if (@PHANTRAMHH > 1 or @PHANTRAMHH < 0)
+		begin
+			print N'Phần trăm HH không nằm trong khoảng quy định'
+			ROLLBACK TRANSACTION
+			RETURN
+		end	
+
+		--Kiểm tra HIỆU LỰC CÓ KHÁC 0 HAY KHÔNG
+		if (@HIEULUC = 0)
+		begin
+			print N'Hiệu lực không thể bằng 0'
+			rollback transaction
+			return
+		end	
+
+		--Kiểm tra ngaybatdau và hieuluc có hợp lí hay không
+		if (DATEDIFF(MONTH, GETDATE(), @NGAYBATDAU) > @HIEULUC)
+		BEGIN
+			PRINT N'Ngày bắt đầu và hiệu lực không hợp lí'
+			ROLLBACK TRANSACTION
+			RETURN
+		END
+
+		--Kiểm tra doanh nghiệp có tồn tại
+		if (not exists(select * from DoanhNghiep where MaSoThue = @MADOANHNGHIEP))
+		BEGIN
+			PRINT N'Doanh nghiệp không tồn tại'
+			ROLLBACK TRANSACTION
+			RETURN
+		END		
+		
+		INSERT INTO HOPDONG
+		VALUES(@MAHD, @NGUOIDAIDIEN, @SOCHINHANHDK, @HIEULUC, @PHANTRAMHH, @NGAYBATDAU, @MADOANHNGHIEP)
+	END TRY			
+	BEGIN CATCH
+		PRINT N'Lỗi hệ thống'
+		ROLLBACK TRANSACTION
+	END CATCH	
+COMMIT TRANSACTION
+GO
+
+--Update SoChiNhanhDK của HOPDONG xử lí ràng buộc 2
+CREATE PROC Update_HopDong_SoChiNhanhDK
+	@mahd varchar(50),
+	@SoChiNhanhDK int
+AS
+BEGIN TRANSACTION
+	BEGIN TRY
+		--Kiểm tra mahd có tồn tại hay không
+		if (not exists(select * from HopDong where MaHD = @mahd))
+		BEGIN
+			PRINT N'Hợp đồng không tồn tại'
+			ROLLBACK TRANSACTION
+			RETURN
+		END			
+		
+		--Kiểm tra sochinhanhdk trong hợp đồng có thay đổi hay không
+		if (not exists(select * from HopDong where MaHD = @mahd and @SoChiNhanhDK = SoChiNhanhDK))
+		BEGIN
+			PRINT N'Không thể update số chi nhánh!!'
+			ROLLBACK TRANSACTION
+			RETURN
+		END		
+			
+	END TRy
+	BEGIN CATCH
+		PRINT N'Lỗi hệ thống'
+		ROLLBACK TRANSACTION
+	END CATCH		
+COMMIT TRANSACTION
+GO				
+
+--DELETE table chinhanh_sp ; RB:4, 5
+CREATE PROC DELETE_CHINHANH_SP
+	@MASP VARCHAR(50),
+	@MACHINHANH VARCHAR(5),
+	@MADOANHNGHIEP VARCHAR(50)
+AS
+BEGIN TRANSACTION
+	BEGIN TRY
+		--kiểm tra xem có tồn tại chinhanh_sp
+		if (not exists(select * from CHINHANH_SP 
+		where @MACHINHANH = MACHINHANH and @MADOANHNGHIEP = MADOANHNGHIEP and 
+		@MASP = MASP))
+		begin
+			PRINT N'Không tồn tại'
+			ROLLBACK TRANSACTION
+			RETURN
+		end	
+
+		--Xử lí ràng buộc 4 : Nếu chi nhánh đó chỉ có một sản phẩm thì không xóa
+		if ((select count(*) from CHINHANH_SP WHERE
+		 @MADOANHNGHIEP = MADOANHNGHIEP AND @MACHINHANH = MACHINHANH) = 1)
+		 BEGIN
+			PRINT N'Chi nhánh này chỉ còn 1 sản phẩm nên không thể xóa'
+			ROLLBACK TRANSACTION
+			RETURN
+		 END		
+
+		--Xử lí ràng buộc 5
+		if ((select count(*) from CHINHANH_SP WHERE @MASP = MASP) = 1)
+		 BEGIN
+			PRINT N'Sản phẩm này chỉ thuộc về 1 chi nhánh nên không thể xóa'
+			ROLLBACK TRANSACTION
+			RETURN
+		 END	
+
+		 delete CHINHANH_SP
+		 where @MASP = MASP and @MACHINHANH = MACHINHANH and @MADOANHNGHIEP = MADOANHNGHIEP
+	END TRY
+	BEGIN CATCH
+		PRINT N'Lỗi hệ thống'
+		ROLLBACK TRANSACTION
+	END CATCH
+COMMIT TRANSACTION
+GO	
+
+
+CREATE PROC Update_ChiNhanh_SP_MaChiNhanh
+	@MASP VARCHAR(50),
+	@MACHINHANH VARCHAR(5),
+	@MADOANHNGHIEP VARCHAR(50),
+	@NEWMACHINHANH VARCHAR(5)
+AS
+BEGIN TRANSACTION
+	BEGIN TRY
+		--kiểm tra xem có tồn tại chinhanh_sp
+		if (not exists(select * from CHINHANH_SP 
+		where @MACHINHANH = MACHINHANH and @MADOANHNGHIEP = MADOANHNGHIEP and 
+		@MASP = MASP))
+		begin
+			PRINT N'Không tồn tại'
+			ROLLBACK TRANSACTION
+			RETURN
+		end	
+
+		--Kiểm tra xem @NewMaChiNhanh có tồn tại
+		if (not exists(select * from ChiNhanh where @NEWMACHINHANH = MaChiNhanh 
+						and @MADOANHNGHIEP = MaDoanhNghiep))
+		BEGIN
+			PRINT N'Không tồn tại chi nhánh mới'
+			ROLLBACK TRANSACTION
+			RETURN
+		END	
+
+		--xỬ LÍ RÀNG BUỘC 4 :Một ChiNhanh phải có ít nhất một sản phẩm
+		if (1 = (select count(*) from CHINHANH_SP 
+		where @MACHINHANH = MACHINHANH and @MADOANHNGHIEP = MADOANHNGHIEP))
+		BEGIN
+			PRINT N'Mỗi chi nhánh phải có ít nhất một sản phẩm'
+			ROLLBACK TRANSACTION
+			RETURN
+		END		
+
+		UPDATE CHINHANH_SP
+		SET MACHINHANH = @NEWMACHINHANH
+		WHERE @MACHINHANH = MACHINHANH
+
+
+	END TRY
+	BEGIN CATCH
+		PRINT N'Lỗi hệ thống'
+		ROLLBACK TRANSACTION
+	END CATCH
+COMMIT TRANSACTION
+GO	
+
+--Update masp của dh_sp
+create proc Update_DonHang_SP_SLSP
+	@MASP VARCHAR(50),
+	@MADH VARCHAR(50),
+	@SLSP int
+AS
+BEGIN TRANSACTION
+	BEGIN TRY
+		--Kiểm tra dh_sp có tồn tại
+		if (not exists(select * from DONHANG_SP where @MASP = MASP and @MADH = MADH))
+		BEGIN
+			PRINT N'DH_SP này không tồn tại'
+			ROLLBACK TRANSACTION
+			RETURN
+		END	
+
+		--Kiểm tra slsp có > 0
+		if (@SLSP <= 0)
+		BEGIN
+			PRINT N'Số lượng sản phẩm phải lớn hơn 0'
+			ROLLBACK TRANSACTION
+			RETURN	
+		END		
+
+		--Xử lí RB 6 : Thay đổi phí sản phẩm ở DonHang 3 * MN 5 * MN
+		UPDATE DONHANG
+		SET PhiSanPham = PHISANPHAM +  (SELECT (@SLSP - SLSP) FROM DONHANG_SP 
+			WHERE @MASP = MASP AND @MADH = MADH) * (SELECT GIA FROM SANPHAM WHERE MASP = @MASP)
+		WHERE  MADH = @MADH
+
+		UPDATE DONHANG_SP 
+		SET SLSP = @SLSP
+		WHERE MASP = @MASP AND MADH = @MADH
+
+	END TRY
+	BEGIN CATCH
+		PRINT N'Lỗi hệ thống'
+		ROLLBACK TRANSACTION
+	END CATCH		
+COMMIT TRANSACTION
+GO		
+
+create proc Update_DonHang_SP_MADH
+	@MASP VARCHAR(50),
+	@MADH VARCHAR(50),
+	@NEWMADH VARCHAR(50)
+AS
+BEGIN TRANSACTION
+	BEGIN TRY
+		--Kiểm tra dh_sp có tồn tại
+		if (not exists(select * from DONHANG_SP where @MASP = MASP and @MADH = MADH))
+		BEGIN
+			PRINT N'DH_SP này không tồn tại'
+			ROLLBACK TRANSACTION
+			RETURN
+		END	
+
+		--Kiểm tra đơn hàng mới có tồn tại hay không
+		if (not exists(select * from donhang where @NEWMADH = MADH))
+		BEGIN
+			PRINT N'Đơn hàng mới không tồn tại'
+			ROLLBACK TRANSACTION
+			RETURN
+		END		
+
+
+
+		--Xử lí RB 6 : Update đơn hàng cũ và đơn hàng mới
+		--Đơn hàng cũ : PHISP = PHISP - (GIA TIEN @MASP) * SLSP
+		UPDATE DONHANG
+		SET PhiSanPham = PHISANPHAM - (select slsp from DONHANG_SP where @masp = masp and @MADH = MaDH) * 
+									(SELECT GIA FROM SANPHAM WHERE @MASP = MASP)
+		WHERE MADH = @MADH
+		--Đơn hàng mới : PhiSP = PhiSP + (Gia Tien @MaSP) * SLSP
+		UPDATE DONHANG
+		SET PhiSanPham = PHISANPHAM + (select slsp from DONHANG_SP where @masp = masp and @MADH = MaDH) * 
+									(SELECT GIA FROM SANPHAM WHERE @MASP = MASP)
+		WHERE MADH = @NEWMADH
+
+
+		UPDATE DONHANG_SP 
+		SET MADH = @NEWMADH
+		WHERE MASP = @MASP AND MADH = @MADH
+
+	END TRY
+	BEGIN CATCH
+		PRINT N'Lỗi hệ thống'
+		ROLLBACK TRANSACTION
+	END CATCH		
+COMMIT TRANSACTION
+GO		
+
+-- 18 updateChiNhanh_SP_MaDoanhNghiep_4
+CREATE PROC Update_ChiNhanh_SP_MaDoanhNghiep
+    @MASP VARCHAR(50),
+    @MACHINHANH VARCHAR(5),
+    @MADOANHNGHIEP VARCHAR(50),
+    @MADOANHNGHIEP_NEW VARCHAR(50)
+AS
+BEGIN TRANSACTION
+    BEGIN TRY
+        --kiem tra xem co ton tai chinhanh_sp
+        if (not exists(select * from CHINHANH_SP 
+        where @MACHINHANH = MACHINHANH and @MADOANHNGHIEP = MADOANHNGHIEP and 
+        @MASP = MASP))
+        begin
+            PRINT N'Không tồn tại'
+            ROLLBACK TRANSACTION
+            RETURN
+        end    
+
+        if (not exists(select * from ChiNhanh where @MADOANHNGHIEP_NEW = MaDoanhNghiep))
+        BEGIN
+            PRINT N'Không tồn tại doanh nghiệp mới'
+            ROLLBACK TRANSACTION
+            RETURN
+        END    
+
+
+        if (1 = (select count(*) from CHINHANH_SP 
+        where @MACHINHANH = MACHINHANH and @MADOANHNGHIEP = MADOANHNGHIEP))
+        BEGIN
+            PRINT N'Mỗi chi nhánh phải có ít nhất 1 sản phẩm'
+            ROLLBACK TRANSACTION
+            RETURN
+        END        
+
+        UPDATE CHINHANH_SP
+        SET MADOANHNGHIEP = @MADOANHNGHIEP_NEW
+        WHERE @MADOANHNGHIEP = MADOANHNGHIEP
+
+    END TRY
+    BEGIN CATCH
+        PRINT N'Lỗi hệ thống'
+        ROLLBACK TRANSACTION
+    END CATCH
+COMMIT TRANSACTION
+
+
+--19 Update ChiNhanh_SP_MaSanPham(newMaSanPham) 5
+CREATE PROC ChiNhanh_SP_MaSanPham
+    @MASP VARCHAR(50),
+    @MACHINHANH VARCHAR(5),
+    @MADOANHNGHIEP VARCHAR(50),
+  @MASP_new VARCHAR(50)
+AS
+BEGIN TRANSACTION
+    BEGIN TRY
+        --kiem tra xem co ton tai chinhanh_sp
+        if (not exists(select * from CHINHANH_SP 
+        where @MACHINHANH = MACHINHANH and @MADOANHNGHIEP = MADOANHNGHIEP and 
+        @MASP = MASP))
+        begin
+            PRINT N'Không tồn tại'
+            ROLLBACK TRANSACTION
+            RETURN
+        end    
+
+        if (not exists(select * from SANPHAM s where @MASP_new = s.MASP))
+        BEGIN
+            PRINT N'Không tồn tại sản phẩm mới'
+            ROLLBACK TRANSACTION
+            RETURN
+        END    
+
+        if (1 = (select count(*) from CHINHANH_SP 
+        where @MACHINHANH = MACHINHANH and @MADOANHNGHIEP = MADOANHNGHIEP))
+        BEGIN
+            PRINT N'Mỗi sản phẩm phải thuộc ít nhất 1 chi nhánh'
+            ROLLBACK TRANSACTION
+            RETURN
+        END
+
+        UPDATE CHINHANH_SP
+        SET MASP = @MASP_new
+        WHERE @MASP = MASP
+
+    END TRY
+    BEGIN CATCH
+        PRINT N'Lỗi hệ thống'
+        ROLLBACK TRANSACTION
+    END CATCH
+COMMIT TRANSACTION
+
+
+--20 Update SanPham_Gia(NewGia) 6
+CREATE PROC update_sanpham_gia
+@MaSP varchar(50),
+@Gia_old SMALLMONEY,
+@Gia_new SMALLMONEY
+AS
+BEGIN TRANSACTION
+BEGIN TRY
+
+  IF NOT EXISTS(SELECT *
+  FROM SANPHAM sp
+  WHERE sp.MASP = @MaSP )
+    BEGIN
+      PRINT N'Mã sản phẩm không tồn tại'
+      ROLLBACK TRANSACTION
+      RETURN
+    END
+  IF NOT EXISTS(SELECT *
+  FROM SANPHAM sp
+  WHERE sp.GIA = @Gia_old AND sp.MASP = @MaSP)
+    BEGIN
+      PRINT N'Thông tin sản phẩm sai'
+      ROLLBACK TRANSACTION
+      RETURN
+    END
+  if (@Gia_new IS NOT null)
+		Begin
+			update SANPHAM 
+			SET GIA = @Gia_new 
+			WHERE GIA = @Gia_old AND MASP = @MaSP
+		End	
+END TRY
+BEGIN CATCH
+PRINT N'Lỗi hệ thống' 
+ROLLBACK TRANSACTION
+END CATCH
+PRINT N'Update successfully'
+COMMIT TRANSACTION
+
+--25 Update TaiXe_KhuVucHD(newKhuVucHD)7
+CREATE PROC update_taixe_khuvuchd
+@MaTX varchar(50),
+@KhuVucHD_old VARCHAR(50),
+@KhuVucHD_new VARCHAR(50)
+AS
+BEGIN TRANSACTION
+BEGIN TRY
+
+  IF NOT EXISTS(SELECT *
+  FROM TAIXE  tx  
+  WHERE tx.MATX = @MaTX )
+    BEGIN
+      PRINT N'Mã tài xế không tồn tại'
+      ROLLBACK TRANSACTION
+      RETURN
+    END
+  IF NOT EXISTS(SELECT *
+  FROM TAIXE tx
+  WHERE tx.KHUVUCHD = @KhuVucHD_old )
+    BEGIN
+      PRINT N'Thông tin khu vực hoạt động  sai'
+      ROLLBACK TRANSACTION
+      RETURN
+    END
+    IF EXISTS(SELECT *
+  FROM TAIXE tx, ChiNhanh cn
+  WHERE @KhuVucHD_new <> cn.DiaChi )
+     BEGIN
+      PRINT N'Thông tin khu vực hoạt động sai'
+      ROLLBACK TRANSACTION
+      RETURN
+    END
+
+  if (@KhuVucHD_new <> @KhuVucHD_old)
+		Begin
+			update TAIXE
+			SET KHUVUCHD = @KhuVucHD_new 
+			WHERE MATX = @MaTX AND KHUVUCHD = @KhuVucHD_old
+		End	
+END TRY
+BEGIN CATCH
+PRINT N'Lỗi khu vực' 
+ROLLBACK TRANSACTION
+END CATCH
+PRINT N'Update successfully'
+COMMIT TRANSACTION
+
+--21 Insert DH_SP() 6
+CREATE PROC Insert_DH_SP
+@SLSP INT,
+@MaSP VARCHAR(50),
+@MaDH VARCHAR(50)
+AS
+BEGIN TRANSACTION
+BEGIN TRY
+
+  IF NOT EXISTS(SELECT *
+  FROM DONHANG_SP ds  
+  WHERE @MaSP = ds.MASP AND @MaDH = ds.MADH)
+    BEGIN
+      PRINT N'Mã don hàng không tồn tại'
+      ROLLBACK TRANSACTION
+      RETURN
+    END
+  -- Check SLSP
+  if (@SLSP = 0)
+		Begin
+			Print N'Số lượng sản phẩm lớn hơn 0'
+			ROLLBACK TRANSACTION
+			RETURN
+		End
+  
+    IF (select SUM(DHSP.SLSP*SP.GIA)
+from DONHANG_SP DHSP JOIN SANPHAM SP ON DHSP.MASP = SP.MASP) != (SELECT SUM(@SLSP*SP.GIA)  FROM  DONHANG_SP DHSP JOIN SANPHAM SP ON DHSP.MASP = SP.MASP)
+  BEGIN 
+    PRINT N'Lỗi phí sản phẩm'
+  ROLLBACK TRANSACTION
+  RETURN
+  END
+
+  INSERT INTO DONHANG_SP
+  VALUEs (@SLSP,@MaSP,@MaDH)
+
+  END TRY
+	BEGIN CATCH
+		PRINT N'Lỗi hệ thống'
+		ROLLBACK TRANSACTION
+	END CATCH
+
+COMMIT TRANSACTION
+
+      
+--27 Delete DH_SP() 6
+
+CREATE PROC delete_DH_SP
+@SLSP INT,
+@MaDH VARCHAR(50),
+@MaSP VARCHAR(50)
+as
+BEGIN TRANSACTION
+  BEGIN TRY
+    IF NOT EXISTS(SELECT *
+                  FROM DONHANG_SP ds 
+                  WHERE ds.MASP = @MaSP AND ds.MADH = @MaDH)
+      BEGIN
+        PRINT N'Đơn hàng không tồn tại'
+        ROLLBACK TRANSACTION
+      END
+    
+  DELETE DONHANG_SP 
+  WHERE MASP = @MaSP AND MaDH = @MaDH
+  END TRY
+  	BEGIN CATCH
+		PRINT N'Lỗi hệ thống'
+		ROLLBACK TRANSACTION
+	END CATCH
+COMMIT TRANSACTION
+
+
