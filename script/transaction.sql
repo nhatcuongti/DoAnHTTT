@@ -141,13 +141,14 @@ GO
 
 --Insert DonHang()
 --	RB:1, 3,6,7,8
-create proc insertDonHang
+CREATE proc insertDonHang
 	@MaDH varchar(50) ,
 	@PhiVanChuyen  smallmoney,
 	@TinhTrang  int,
 	@HinhThucThanhToan  int ,
 	@PhiSanPham  smallmoney,
 	@NgayDat Datetime,
+	@DiaChiGiao nvarchar(50),
 	@MaChiNhanh varchar(5) ,
 	@MaDoanhNghiep varchar(50) ,
 	@MaKhachHang varchar(50) ,
@@ -191,8 +192,8 @@ begin transaction
 		print 'Loi insert Don Hang'
 		rollback transaction
 	END CATCH
-	INSERT INTO donhang(MaDH,PhiVanChuyen,TinhTrang,HinhThucThanhToan,PhiSanPham,NgayDat,MaChiNhanh,MaDoanhNghiep,makh,MaTX)
-	VALUES (@MaDH,@PhiVanChuyen,@TinhTrang,@HinhThucThanhToan,@PhiSanPham,@NgayDat,@MaChiNhanh,@MaDoanhNghiep,@MaKhachHang,@MaTX);
+	INSERT INTO donhang
+	VALUES (@MaDH,@PhiVanChuyen,@TinhTrang,@HinhThucThanhToan,@PhiSanPham,@NgayDat, @DiaChiGiao, @MaChiNhanh,@MaDoanhNghiep,@MaKhachHang,@MaTX);
 
 	UPDATE DoanhNghiep
 	SET SLDonHang = SLDonHang + 1
@@ -204,6 +205,10 @@ begin transaction
 
 	COMMIT TRANSACTION
 GO
+SELECT * FROM DonHang
+SELECT * FROM ChiNhanh
+SELECT * FROM TAIXE
+EXEC insertDonHang '2', 1000, 0, 0, 50000, '2021-05-03', N'Ha Noi', '1', '232132', '1', '1'
 --Delete DonHang()
 --		RB 1, 3
 create proc deleteDonHang
@@ -1038,4 +1043,9 @@ BEGIN TRANSACTION
 	END CATCH
 COMMIT TRANSACTION
 
+
+
+SELECT * FROM DONHANG_SP
+
+INSERT INTO DONHANG_SP VALUES('2', '1', 3)
 

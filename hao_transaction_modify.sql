@@ -1,129 +1,4 @@
-﻿--INSERT ACCOUNT TAIXE
-alter PROC insert_account_taixe
-@ID varchar(50),
-@IDTAIXE VARCHAR(50),
-@MK VARCHAR(50),
-@HOTEN NVARCHAR(50),
-@DIACHI NVARCHAR(50),
-@EMAIL VARCHAR(50),
-@BIENSOXE VARCHAR(50),
-@TKNH VARCHAR(50),
-@KHUVUCHD INT,
-@SDT VARCHAR(20)
-as
-BEGIN TRANSACTION
-	BEGIN TRY
-		INSERT INTO TAIXE 
-		VALUES (@IDTAIXE, @HOTEN, @DIACHI, @EMAIL, @BIENSOXE, @TKNH, @KHUVUCHD, @SDT);
-
-
-		INSERT INTO TKTAIXE
-		VALUES (@ID, @MK, 1, 'TRUE', @IDTAIXE)
-	END TRY
-
-	BEGIN CATCH
-		PRINT N'Lỗi hệ thống'
-		ROLLBACK TRANSACTION
-	END CATCH
-COMMIT TRANSACTION
-GO
-
---INSERT ACCOUNT DOANHNGHIEP
-CREATE PROC insert_account_khachhang
-@MAKH varchar(50),
-@HOTEN NVARCHAR(50),
-@SDT VARCHAR(50),
-@DIACHI NVARCHAR(50),
-@EMAIL VARCHAR(50),
-@ID VARCHAR(50),
-@MK VARCHAR(50)
-as
-BEGIN TRANSACTION
-	BEGIN TRY
-		INSERT INTO KhachHang 
-		VALUES (@MAKH ,
-		@HOTEN ,
-		@SDT ,
-		@DIACHI ,
-		@EMAIL );
-
-
-		INSERT INTO TKKhachHang
-		VALUES (@ID, @MK, 1, @MAKH)
-	END TRY
-
-	BEGIN CATCH
-		PRINT N'Lỗi hệ thống'
-		ROLLBACK TRANSACTION
-	END CATCH
-COMMIT TRANSACTION
-GO
-
---INSERT ACCOUNT DOANHNGHIEP
-create PROC insert_account_partner
-@MASOTHUE varchar(50),
-@LOAIHOANG NVARCHAR(50),
-@DIACHIKINHDOANH NVARCHAR(50),
-@TENDOANHNGHIEP VARCHAR(50),
-@NGUOIDAIDIEN NVARCHAR(50),
-@SODT VARCHAR(50),
-@EMAIL VARCHAR(50),
-@ID VARCHAR(50),
-@MK VARCHAR(50)
-as
-BEGIN TRANSACTION
-	BEGIN TRY
-		INSERT INTO DoanhNghiep
-		VALUES(@MASOTHUE ,
-		@LOAIHOANG ,
-		@DIACHIKINHDOANH ,
-		'' ,
-		@TENDOANHNGHIEP ,
-		@NGUOIDAIDIEN ,
-		'' ,
-		@SODT ,
-		@EMAIL,
-		0)
-
-		INSERT INTO TKDoanhNghiep
-		VALUES(@ID, @MK, 1, @MASOTHUE)
-
-
-
-	END TRY
-
-	BEGIN CATCH
-		PRINT N'Lỗi hệ thống'
-		ROLLBACK TRANSACTION
-	END CATCH
-COMMIT TRANSACTION
-GO
-
-select * from DoanhNghiep
-select * from TKDoanhNghiep
-
-EXEC insert_account_khachhang '1', N'BÙI NGUYỄN NHẬT HÀO', '0909845284', N'BÌNH PHƯỚC, LỘC NINH', 'NHATCUONGTI@GMAIL.COM', 'NHATCUONGTI', '123456'
---CREATE TABLE LOAIHOANG
-CREATE TABLE LOAIHANG(
-	MALOAIHANG int IDENTITY(1,1) primary key,
-	TENLOAIHANG NVARCHAR(50)
-)
-
-DROP TABLE LOAIHANG
-
-
-
-INSERT INTO LOAIHANG(TENLOAIHANG)
-VALUES(N'Quần Áo'),
-      (N'Đồ ăn'),
-	  (N'Thể Thao'),
-	  (N'Nội Thất')
-SELECT * FROM LOAIHANG
-
-select * from TKKhachHang
-select * from KhachHang
-
---22/12/2021
+﻿
 --Hiển thị danh sách company
   --Insert dữ liệu
 	SELECT * FROM DoanhNghiep
@@ -159,15 +34,11 @@ select * from KhachHang
 		  ('2', '1', '232132'),
 		  ('3', '1', '232132'),
 		  ('4', '1', '232132')
-    --Tìm sản phẩm của một doanh nghiệp
-	SELECT SP.MASP AS idProduct, DN.MaSoThue AS idCompany, SP.TENSP AS name, SP.GIA AS price
-	FROM DoanhNghiep DN JOIN ChiNhanh CN ON DN.MaSoThue = CN.MaDoanhNghiep
-	                    JOIN CHINHANH_SP CNSP ON (CNSP.MACHINHANH = CN.MaChiNhanh AND CNSP.MADOANHNGHIEP = DN.MaSoThue)
-						JOIN SANPHAM SP ON SP.MASP = CNSP.MASP
 
 	--Tạo transaction tìm sản phẩm
-	ALTER PROC viewProductOfCompany
-	@MADOANHNGHIEP VARCHAR(50)
+	CREATE PROC viewProductOfCompany
+	@MADOANHNGHIEP VARCHAR(50),
+	@MACHINHANH VARCHAR(50)
 	AS
 	BEGIN TRANSACTION
 		BEGIN TRY
@@ -175,7 +46,7 @@ select * from KhachHang
 			FROM DoanhNghiep DN JOIN ChiNhanh CN ON DN.MaSoThue = CN.MaDoanhNghiep
 								JOIN CHINHANH_SP CNSP ON (CNSP.MACHINHANH = CN.MaChiNhanh AND CNSP.MADOANHNGHIEP = DN.MaSoThue)
 								JOIN SANPHAM SP ON SP.MASP = CNSP.MASP
-			WHERE DN.MaSoThue = @MADOANHNGHIEP
+			WHERE DN.MaSoThue = @MADOANHNGHIEP AND CN.MaChiNhanh = @MACHINHANH
 		END TRY
 		BEGIN CATCH
 			PRINT N'Lỗi hệ thống'
@@ -185,8 +56,9 @@ select * from KhachHang
 	COMMIT TRANSACTION
 	GO
 
-	EXEC viewProductOfCompany '10'
+	EXEC viewProductOfCompany '232132', '1'
 
+	select * from DONHANG
 
 --Hiển thị danh sách order CỦA MỘT KHÁCH HÀNG
     --Insert KhachHang
@@ -296,3 +168,8 @@ select * from KhachHang
 	GO
 
 	EXEC viewDetailOrder '1'
+
+	--Insert order
+	Select * from ChiNhanh
+	SELECT * FROM DONHANG_SP
+	SELECT * FROM DonHang
