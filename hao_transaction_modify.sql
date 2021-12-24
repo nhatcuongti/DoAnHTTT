@@ -173,3 +173,93 @@
 	Select * from ChiNhanh
 	SELECT * FROM DONHANG_SP
 	SELECT * FROM DonHang
+
+--24/12/2021
+USE Nhom18_DoAnThucHanh_19HTT2_1
+GO
+
+--getAllContract (company.model.js line 89)
+SELECT HD.MaHD, DN.TenDoanhNghiep, HD.NgayBatDau, HD.HieuLuc, HD.DangGiaHan
+FROM HOPDONG HD JOIN DOANHNGHIEP DN ON HD.MaDoanhNghiep = DN.MaSoThue
+
+--updateDangGiaHanContract(company.model.js line 169)
+UPDATE HopDong 
+Set DangGiaHan= 'false'
+where MaHD = 'HD000'
+
+--getContractWithID (company.model.js line 116)
+SELECT MAHD, TenDoanhNghiep, HD.NguoiDaiDien, NgayBatDau, HieuLuc, SoChiNhanhDK
+FROM HopDong HD JOIN DoanhNghiep DN ON HD.MaDoanhNghiep = DN.MaSoThue
+WHERE MaHD='HD000'
+
+--getBranchWithIDContract (company.model.js line 110)
+--MaChiNhanh : '1',
+--DiaChi : 'Bình Phước, Lộc Ninh'
+SELECT MACHINHANH as MaChiNhanh, DiaChi
+FROM ChiNhanh
+WHERE MAHOPDONG='HD001'
+
+select * from DonHang
+
+--getOrderDetailWithID_Driver(order.model.js line 145)
+--MaDH : '1',
+--TenKH : 'Bùi Nguyễn Nhật Hào',
+--SDT_KH: '0909845284',
+--DC_KH : 'Bình Phước, Lộc Ninh',
+--TenDN : 'FPT',
+--DC_CN : 'Hà Nội',
+--SDT_CN : '0987783897' 
+SELECT MaDH, KH.HoTen AS TenKH, KH.SDT AS SDT_KH, DH.DiaChiGiao AS DC_KH, DN.TenDoanhNghiep AS TenDN, CN.DiaChi as DC_CN, DN.SoDT AS SDT_CN
+FROM DonHang DH JOIN KhachHang KH ON DH.MaKH = KH.MaKH
+				JOIN ChiNhanh CN ON (DH.MaDoanhNghiep = CN.MaDoanhNghiep AND DH.MACHINHANH = CN.MACHINHANH)
+				JOIN DoanhNghiep DN ON (DN.MaSoThue = DH.MaDoanhNghiep)
+WHERE MADH = 'DH000'
+
+--getOrderDetail_Driver() (order.model.js line 164)
+--MaDH : '1',
+--DiaChi_ChiNhanh : 'Hà Nội',
+--PhiVanChuyen : 20000,
+--HoTen : 'Bùi Nguyễn Nhật Hào',
+--DiaChi_KhachHang : 'Sài Gòn',
+--SDT : '0909845284',
+--status : 0
+
+SELECT MaDH, CN.DiaChi AS DiaChi_ChiNhanh, DH.PhiVanChuyen, KH.HoTen, DH.DiaChiGiao as DiaChi_KhachHang, KH.SDT, DH.TinhTrang			
+FROM DonHang DH JOIN ChiNhanh CN ON DH.MACHINHANH = CN.MACHINHANH 
+				JOIN KhachHang KH ON DH.MaKH = KH.MaKH
+
+--updateStatusOrder(orderID, newStatus) (order.model.js line 209)
+UPDATE DonHang 
+Set TinhTrang = 1
+where MaDH = 'DH000'
+				
+SELECT * FROM DonHang
+--insertTypeProduct() (product.model.js line 43)
+INSERT INTO LOAIHANG
+VALUES('1', 'OTO')
+
+--insertPlace() (product.model.js line 52)
+INSERT INTO KhuVucHoatDong
+VALUES('1', 'Bình Phước')
+
+--getAllDriver() (account.model.js line 183)
+SELECT TX.MATX, HOTEN, EMAIL, SDT, TRANGTHAI
+FROM TAIXE TX JOIN TKTAIXE TKTX ON TX.MATX = TKTX.MATX
+
+
+--updateAccountStatus(driverID, statusChoice) (account.model.js line 208)
+SELECT * FROM TKTAIXE
+UPDATE TKTAIXE SET TRANGTHAI = 1 WHERE ID='TX04165'
+
+--getAllUser() (account.model.js line 230)
+SELECT KH.MaKH, HOTEN, SDT, EMAIL, TrangThai
+FROM KHACHHANG KH JOIN TKKhachHang TKKH ON KH.MaKH = TKKH.MaKH
+
+SELECT MaSoThue, TenDoanhNghiep, DiaChiKinhDoanh, TENLOAIHANG, trangthai
+FROM DOANHNGHIEP DN JOIN TKDoanhNghiep TKDN ON DN.MaSoThue = TKDN.MADOANHNGHIEP	
+					JOIN LOAIHANG LH ON LH.MALOAIHANG = DN.LoaiHang
+
+
+SELECT NV.MANV, NV.HOTEN, NV.SDT, TKNV.TRANGTHAI
+FROM NHANVIEN NV JOIN TKNHANVIEN TKNV ON NV.MANV = TKNV.MANV
+
