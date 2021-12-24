@@ -82,7 +82,7 @@ CREATE TABLE HopDong(
   PRIMARY KEY(MaHD)
 );
 GO
-DROP TABLE HopDong
+
 
 CREATE TABLE TKDoanhNghiep(
   ID VARCHAR(50) NOT NULL,
@@ -152,7 +152,7 @@ create table DonHang
 	MACHINHANH VARCHAR(50) not NULL,
 	MaDoanhNghiep varchar(50) not NULL,
 	MaKH varchar(50) not NULL,
-	MaTX varchar(50) not NULL,
+	MaTX varchar(50) 
 	primary key(MaDH)
 )
 GO
@@ -189,12 +189,12 @@ CREATE TABLE LOAIHANG(
 );
 GO
 
-
 --Create foreign key
 --foreign key of DoanhNghiep
   ALTER TABLE DoanhNghiep
   ADD CONSTRAINT FK_Doanhnghiep
   FOREIGN KEY (LoaiHang) REFERENCES LOAIHANG(MALOAIHANG)
+  GO
 --Foreign key of TKNHANVIEN
 ALTER TABLE TKNHANVIEN	
 ADD CONSTRAINT FK_TKNHANVIEN

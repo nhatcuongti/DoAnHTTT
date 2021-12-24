@@ -1,5 +1,11 @@
-﻿+﻿--Them Chi Nhanh ; Rang Buoc :2
-create PROC INSERT_CHINHANH
+﻿SELECT 'DROP PROCEDURE [' + SCHEMA_NAME(p.schema_id) + '].[' + p.NAME + '];'
+FROM sys.procedures p 
+
+USE Nhom18_DoAnThucHanh_19HTT2_1
+GO
+
+
+CREATE PROC INSERT_CHINHANH
 	@MACHINHANH VARCHAR(5),
 	@MADOANHNGHIEP VARCHAR(50),
 	@DIACHI NVARCHAR(200),
@@ -32,10 +38,8 @@ BEGIN TRANSACTION
 			WHERE MAHD = @MAHOPDONG 
 		End	
 
-	INSERT INTO CHINHANH
-	VALUES(@MACHINHANH, @MADOANHNGHIEP, @DIACHI, @DOANHSOBAN, @MAHOPDONG);
-
-		
+		INSERT INTO CHINHANH
+		VALUES(@MACHINHANH, @MADOANHNGHIEP, @DIACHI, @DOANHSOBAN, @MAHOPDONG);
 	END TRY
 	BEGIN CATCH
 		PRINT N'Lỗi hệ thống'
@@ -47,7 +51,7 @@ GO
 
 --DELETE ChINHANH TRANSACTION , Ràng buộc :  2
 
-create PROC DELETE_CHINHANH
+CREATE PROC DELETE_CHINHANH
 	@MACHINHANH VARCHAR(5),
 	@MADOANHNGHIEP VARCHAR(50)
 AS
@@ -77,7 +81,7 @@ BEGIN TRANSACTION
 
 COMMIT TRANSACTION
 GO
-  --
+
 create proc insertDoanhNghiep
 	@MaSoThue varchar(50),
 	@LoaiHang varchar(100),
@@ -147,12 +151,10 @@ CREATE proc insertDonHang
 	@TinhTrang  int,
 	@HinhThucThanhToan  int ,
 	@PhiSanPham  smallmoney,
-	@NgayDat Datetime,
 	@DiaChiGiao nvarchar(50),
 	@MaChiNhanh varchar(5) ,
 	@MaDoanhNghiep varchar(50) ,
-	@MaKhachHang varchar(50) ,
-	@MaTX varchar(50)
+	@MaKhachHang varchar(50)
 as
 begin transaction
 	begin try
@@ -165,18 +167,6 @@ begin transaction
 		if not exists (select * from KhachHang kh where @MaKhachHang = kh.MaKH)
 		begin 
 			print 'khong ton tai ma khach hang tren'
-			rollback transaction
-			return
-		end
-		if not exists (select * from TAIXE tx where @MaTX = tx.MATX)
-		begin 
-			print 'khong ton tai ma tai xe tren'
-			rollback transaction
-			return
-		end
-		if (select tx.KHUVUCHD from TAIXE tx where tx.MATX = @MaTX) != (select cn.DiaChi from ChiNhanh Cn where cn.MaChiNhanh = @MaChiNhanh And cn.MaDoanhNghiep = @MaDoanhNghiep)
-		begin 
-			print 'Dia chi chi nhanh trong don hang va khu vuc hoat dong tai xe khong khop'
 			rollback transaction
 			return
 		end
@@ -193,7 +183,9 @@ begin transaction
 		rollback transaction
 	END CATCH
 	INSERT INTO donhang
-	VALUES (@MaDH,@PhiVanChuyen,@TinhTrang,@HinhThucThanhToan,@PhiSanPham,@NgayDat, @DiaChiGiao, @MaChiNhanh,@MaDoanhNghiep,@MaKhachHang,@MaTX);
+	VALUES (@MaDH,@PhiVanChuyen,@TinhTrang,@HinhThucThanhToan,@PhiSanPham, GETDATE(), @DiaChiGiao, @MaChiNhanh,@MaDoanhNghiep,@MaKhachHang,NULL);
+
+
 
 	UPDATE DoanhNghiep
 	SET SLDonHang = SLDonHang + 1
@@ -205,13 +197,10 @@ begin transaction
 
 	COMMIT TRANSACTION
 GO
-SELECT * FROM DonHang
-SELECT * FROM ChiNhanh
-SELECT * FROM TAIXE
-EXEC insertDonHang '2', 1000, 0, 0, 50000, '2021-05-03', N'Ha Noi', '1', '232132', '1', '1'
+
 --Delete DonHang()
 --		RB 1, 3
-create proc deleteDonHang
+CREATE proc deleteDonHang
 	@MaDH varchar(50)
 as
 begin transaction
@@ -247,7 +236,7 @@ go
 
 --Update DonHang_MaChiNhanh(new MaChiNhanh)
 --		RB:3,7,8
-create proc updateDonHangMaChiNhanh
+CREATE proc updateDonHangMaChiNhanh
 	@MaDH varchar(50),
 	@MaChiNhanhMoi varchar(5) 
 as
@@ -310,7 +299,7 @@ GO
 ---Update DonHang_MaDoanhNghiep(New MaDoanhNghiep)
 --		RB:3,7,8
 
-create proc updateDonHangMaDoanhNghiep
+CREATE proc updateDonHangMaDoanhNghiep
 	@MaDH varchar(50),
 	@MaDoanhNghiepMoi varchar(50) 
 as
@@ -384,7 +373,7 @@ GO
 
 --Updata DonHang_PhiSP(newPhiSP)
 --		RB: 3,6
-create proc updateDonHangPhiSanPham
+CREATE proc updateDonHangPhiSanPham
 	@MaDH varchar(50) ,
 	@PhiSanPhamMoi smallmoney
 as
@@ -427,7 +416,7 @@ GO
 --Update DonHang_MaTX(newMaTX)
 --	RB:7 
 
-create proc updateDonHangMaTaiXe
+CREATE proc updateDonHangMaTaiXe
 	@MaDH varchar(50) ,
 	@maTXMoi varchar(50)
 as
@@ -505,7 +494,7 @@ BEGIN TRANSACTION
 COMMIT TRANSACTION
 GO
 
-create PROC INSERT_HOPDONG
+CREATE PROC INSERT_HOPDONG
 	@MAHD VARCHAR(50),
 	@NGUOIDAIDIEN NVARCHAR(50),
 	@SOCHINHANHDK INT,
@@ -565,7 +554,8 @@ BEGIN TRANSACTION
 		END		
 		
 		INSERT INTO HOPDONG
-		VALUES(@MAHD, @NGUOIDAIDIEN, @SOCHINHANHDK, @HIEULUC, @PHANTRAMHH, @NGAYBATDAU, @MADOANHNGHIEP)
+		VALUES(@MAHD, @NGUOIDAIDIEN, @SOCHINHANHDK, @HIEULUC, @PHANTRAMHH, @NGAYBATDAU, @MADOANHNGHIEP, 1)
+
 	END TRY			
 	BEGIN CATCH
 		PRINT N'Lỗi hệ thống'
@@ -837,52 +827,54 @@ BEGIN TRANSACTION
         ROLLBACK TRANSACTION
     END CATCH
 COMMIT TRANSACTION
+GO
 
 
 --19 Update ChiNhanh_SP_MaSanPham(newMaSanPham) 5
 CREATE PROC ChiNhanh_SP_MaSanPham
     @MASP VARCHAR(50),
-    @MACHINHANH VARCHAR(5),
+    @MACHINHANH VARCHAR(50),
     @MADOANHNGHIEP VARCHAR(50),
-  @MASP_new VARCHAR(50)
+	@MASP_new VARCHAR(50)
 AS
 BEGIN TRANSACTION
-    BEGIN TRY
-        --kiem tra xem co ton tai chinhanh_sp
-        if (not exists(select * from CHINHANH_SP 
-        where @MACHINHANH = MACHINHANH and @MADOANHNGHIEP = MADOANHNGHIEP and 
-        @MASP = MASP))
-        begin
-            PRINT N'Không tồn tại'
-            ROLLBACK TRANSACTION
-            RETURN
-        end    
+	BEGIN TRY
+		--kiem tra xem co ton tai chinhanh_sp
+		if (not exists(select * from CHINHANH_SP 
+		where @MACHINHANH = MACHINHANH and @MADOANHNGHIEP = MADOANHNGHIEP and 
+		@MASP = MASP))
+		begin
+			PRINT N'Không tồn tại'
+			ROLLBACK TRANSACTION
+			RETURN
+		end    
 
-        if (not exists(select * from SANPHAM s where @MASP_new = s.MASP))
-        BEGIN
-            PRINT N'Không tồn tại sản phẩm mới'
-            ROLLBACK TRANSACTION
-            RETURN
-        END    
+		if (not exists(select * from SANPHAM s where @MASP_new = s.MASP))
+		BEGIN
+			PRINT N'Không tồn tại sản phẩm mới'
+			ROLLBACK TRANSACTION
+			RETURN
+		END    
 
-        if (1 = (select count(*) from CHINHANH_SP 
-        where @MACHINHANH = MACHINHANH and @MADOANHNGHIEP = MADOANHNGHIEP))
-        BEGIN
-            PRINT N'Mỗi sản phẩm phải thuộc ít nhất 1 chi nhánh'
-            ROLLBACK TRANSACTION
-            RETURN
-        END
+		if (1 = (select count(*) from CHINHANH_SP 
+		where @MACHINHANH = MACHINHANH and @MADOANHNGHIEP = MADOANHNGHIEP))
+		BEGIN
+			PRINT N'Mỗi sản phẩm phải thuộc ít nhất 1 chi nhánh'
+			ROLLBACK TRANSACTION
+			RETURN
+		END
 
-        UPDATE CHINHANH_SP
-        SET MASP = @MASP_new
-        WHERE @MASP = MASP
+		UPDATE CHINHANH_SP
+		SET MASP = @MASP_new
+		WHERE @MASP = MASP
 
-    END TRY
-    BEGIN CATCH
-        PRINT N'Lỗi hệ thống'
-        ROLLBACK TRANSACTION
-    END CATCH
+	END TRY
+	BEGIN CATCH
+	PRINT N'Lỗi hệ thống'
+	ROLLBACK TRANSACTION
+	END CATCH
 COMMIT TRANSACTION
+GO
 
 
 --20 Update SanPham_Gia(NewGia) 6
@@ -923,6 +915,7 @@ ROLLBACK TRANSACTION
 END CATCH
 PRINT N'Update successfully'
 COMMIT TRANSACTION
+GO
 
 --25 Update TaiXe_KhuVucHD(newKhuVucHD)7
 CREATE PROC update_taixe_khuvuchd
@@ -971,6 +964,7 @@ ROLLBACK TRANSACTION
 END CATCH
 PRINT N'Update successfully'
 COMMIT TRANSACTION
+GO
 
 --21 Insert DH_SP() 6
 CREATE PROC Insert_DH_SP
@@ -1015,6 +1009,7 @@ from DONHANG_SP DHSP JOIN SANPHAM SP ON DHSP.MASP = SP.MASP) != (SELECT SUM(@SLS
 	END CATCH
 
 COMMIT TRANSACTION
+GO
 
       
 --27 Delete DH_SP() 6
@@ -1042,10 +1037,86 @@ BEGIN TRANSACTION
 		ROLLBACK TRANSACTION
 	END CATCH
 COMMIT TRANSACTION
+GO
+
+--insert ACCOUNT DRIVER
+
+CREATE PROC insert_account_taixe
+	@ID VARCHAR(50),
+	@IDTAIXE VARCHAR(50),
+	@MK VARCHAR(50),
+	@HOTEN NVARCHAR(50),
+	@DIACHI NVARCHAR(100),
+	@EMAIL VARCHAR(50),
+	@BIENSOXE VARCHAR(50),
+	@TKNH VARCHAR(50),
+	@KHUVUCHD VARCHAR(50),
+	@SDT VARCHAR(50)
+	as
+BEGIN TRANSACTION
+  BEGIN TRY
+	INSERT INTO TAIXE
+	VALUES(@IDTAIXE, @HOTEN, @DIACHI, @EMAIL, @BIENSOXE, @TKNH, @KHUVUCHD, @SDT)
+
+   INSERT INTO TKTAIXE
+   VALUES(@ID, @MK, 1, 1, @IDTAIXE)
+  END TRY
+  	BEGIN CATCH
+		PRINT N'Lỗi hệ thống'
+		ROLLBACK TRANSACTION
+	END CATCH
+COMMIT TRANSACTION
+GO
+
+--insert account client
+CREATE PROC insert_account_khachhang
+	@MAKH VARCHAR(50),
+	@HOTEN NVARCHAR(100), 
+	@SDT VARCHAR(50), 
+	@DIACHI NVARCHAR(100), 
+	@EMAIL VARCHAR(50), 
+	@ID VARCHAR(50), 
+	@MK VARCHAR(50)
+	as
+BEGIN TRANSACTION
+  BEGIN TRY
+	INSERT INTO KhachHang
+	VALUES(@MAKH, @HOTEN, @SDT, @DIACHI, @EMAIL)
+
+   INSERT INTO TKKhachHang
+   VALUES(@ID, @MK, 1, @MAKH)
+  END TRY
+  	BEGIN CATCH
+		PRINT N'Lỗi hệ thống'
+		ROLLBACK TRANSACTION
+	END CATCH
+COMMIT TRANSACTION
+GO
+
+--insert account partner
+CREATE PROC insert_account_partner
+	@MASOTHUE VARCHAR(50),
+	@LOAIHANG VARCHAR(50),
+	@DIACHIKINHDOANH NVARCHAR(100), 
+	@TENDOANHNGHIEP VARCHAR(50), 
+    @NGUOIDAIDIEN NVARCHAR(100), 
+	@SODT VARCHAR(50), 
+	@EMAIL VARCHAR(50), 
+	@ID VARCHAR(50), 
+	@MK VARCHAR(50)
+	as
+BEGIN TRANSACTION
+	BEGIN TRY
+		INSERT INTO DoanhNghiep
+		VALUES(@MASOTHUE, @LOAIHANG, @DIACHIKINHDOANH, '', @TENDOANHNGHIEP, @NGUOIDAIDIEN, '', @SODT, @EMAIL, 0)
 
 
-
-SELECT * FROM DONHANG_SP
-
-INSERT INTO DONHANG_SP VALUES('2', '1', 3)
-
+		INSERT INTO TKDoanhNghiep
+		VALUES(@ID, @MK, 1, @MASOTHUE)
+	END TRY
+	BEGIN CATCH
+		PRINT N'Lỗi hệ thống'
+		ROLLBACK TRANSACTION
+	END CATCH
+COMMIT TRANSACTION
+GO
