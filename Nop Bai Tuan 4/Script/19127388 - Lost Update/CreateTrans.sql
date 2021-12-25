@@ -49,21 +49,24 @@ AS
 BEGIN TRANSACTION
 	BEGIN TRY
 		DECLARE @SoChiNhanhDK int
+		DECLARE @MAHOPDONG varchar(50)
+		set @MAHOPDONG = (SELECT cn.MAHOPDONG from ChiNhanh cn where cn.MaDoanhNghiep = @MADOANHNGHIEP and cn.MACHINHANH = @MACHINHANH )
 		set @SoChiNhanhDK = (Select SoChiNhanhDK from HopDong where MaHD = @MAHOPDONG )
-
+		
+		waitfor delay '00:00:10' --2 
 
 		PRINT @SoChiNhanhDK
 
 		--Giảm số chi nhánh đăng kí
 		UPDATE HOPDONG
 		SET SoChiNhanhDK = @SoChiNhanhDK - 1
-		WHERE MaHD = (SELECT )
+		WHERE MaHD = @MAHOPDONG
 
 		PRINT N'UPDATE1 SUCCESS'
 
 		SELECT * FROM ChiNhanh
 
-
+		-- giảm số lượng
 		DELETE ChiNhanh
 		WHERE MaChiNhanh = @MACHINHANH AND @MADOANHNGHIEP = MaDoanhNghiep
 		PRINT N'UPDATE2 SUCCESS'
