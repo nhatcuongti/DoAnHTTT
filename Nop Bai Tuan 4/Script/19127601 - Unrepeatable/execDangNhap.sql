@@ -7,5 +7,11 @@ Go
 -- thì tài khoản sẽ không đăng nhập thành công 
 
 -- Khi tài khoản không bị khoá thì sẽ đăng nhập thành công và hiển thị trạng thái là 1
-exec sp_DangNhapNhanVien "nvhao", "123"
+
+SELECT * FROM TKNHANVIEN
+UPDATE TKNHANVIEN
+SET TRANGTHAI = 1
+
+
+exec sp_DangNhapNhanVien 'NV81255', 'J9UJ56'
 Go

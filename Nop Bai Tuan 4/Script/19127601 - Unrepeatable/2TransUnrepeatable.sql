@@ -15,7 +15,7 @@ go
 
 --T1
 
-create proc sp_KhoaTaiKhoanNhanVien
+alter proc sp_KhoaTaiKhoanNhanVien
 
 	@taikhoan varchar(50)
 as
@@ -44,7 +44,7 @@ GO
 
 
 --T2
-create proc sp_DangNhapNhanVien
+alter proc sp_DangNhapNhanVien
 
 	@taikhoan varchar(50),
 	@matkhau varchar(50)
@@ -85,9 +85,13 @@ begin transaction
 	Set @tk = (SELECT tknv.id FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
 	Set @mk = (SELECT tknv.mk FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
 	Set @tt = (SELECT tknv.TRANGTHAI FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
-	Print '-- Tai Khoan: ' + @tk 
-	Print '-- Mat khau: ' + @mk 
-	Print '-- Trang thai: ' + cast(@tt as varchar(10))
+
+	SELECT ID, MK, TRANGTHAI FROM TKNHANVIEN
+	WHERE ID = @taikhoan
+
 	COMMIT TRANSACTION
 GO
 
+
+
+select * from TKNHANVIEN

@@ -4,5 +4,5 @@ Go
 Select * from TKNHANVIEN
 select * from NHANVIEN
 
-EXEC CapNhatTrangThaiNV 'nhatcuongti', 1
+EXEC CapNhatTrangThaiNV 'NV81255', 1
 GO

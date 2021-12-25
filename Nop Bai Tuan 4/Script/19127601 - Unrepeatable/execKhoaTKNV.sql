@@ -1,4 +1,9 @@
 use Nhom18_DoAnThucHanh_19HTT2_1
 Go
-exec sp_KhoaTaiKhoanNhanVien 'nvhao' 
+
+
+exec sp_KhoaTaiKhoanNhanVien 'NV81255' 
 Go
+
+SELECT * FROM TKNHANVIEN
+SELECT * FROM NHANVIEN

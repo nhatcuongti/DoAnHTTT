@@ -1,4 +1,4 @@
-﻿USE Nhom18_DoAnThucHanh_19HTT2_1
+﻿USE Nhom18_DoAnThucHanh
 GO
 
 Select * from TKNHANVIEN
@@ -13,20 +13,19 @@ values('nhatcuongti', '123456', 1, 'NV01')
 
 
 --Đổi mật khẩu
-ALTER PROC DoiMatKhau
+CREATE PROC DoiMatKhau
 	@ID varchar(50),
 	@MKMoi varchar(50)
 AS
 BEGIN TRANSACTION
 SET TRAN ISOLATION LEVEL REPEATABLE READ
-
+	BEGIN TRY
 		--B1: Kiểm tra ID có tồn tại hay không
-		IF NOT EXISTS (select * from TKNHANVIEN where ID = @ID)
+		IF NOT EXISTS (select * from TKNHANVIEN  where ID = @ID)
 		BEGIN
-			SELECT N'LỖI KHÔNG TỒN TẠI TÀI KHOẢN'
-			PRINT N'Tài khoản này không tồn tại'
-			ROLLBACK TRANSACTION
-			RETURN
+			   PRINT N'Tài khoản này không tồn tại'
+			   ROLLBACK TRANSACTION
+			   RETURN
 		END
 		WAITFOR DELAY '00:00:10'
 
@@ -36,6 +35,14 @@ SET TRAN ISOLATION LEVEL REPEATABLE READ
 		SET MK = @MKMoi
 		WHERE ID = @ID
 
+	
+
+	END TRY
+	BEGIN CATCH
+		ROLLBACK TRANSACTION
+		PRINT N'Lỗi hệ thống'
+		
+	END CATCH
 
 COMMIT TRANSACTION
 GO
@@ -48,7 +55,7 @@ ALTER PROC CapNhatTrangThaiNV
 AS
 SET TRAN ISOLATION LEVEL REPEATABLE READ
 BEGIN TRANSACTION
-
+	BEGIN TRY
 		--Kiểm tra @ID có tồn tại hay không ?
 		IF NOT EXISTS (SELECT * FROM TKNHANVIEN WHERE ID = @ID)
 		BEGIN
@@ -58,12 +65,18 @@ BEGIN TRANSACTION
 		END
 
 
-		--Cập trạng thái của nhân viên
+		--Cập nhật trạng thái của nhân viên
 		Update TKNHANVIEN
 		set TRANGTHAI = @TrangThai
 		where ID = @ID
 
+
+	END TRY
+	BEGIN CATCH
+		PRINT N'Lỗi hệ thống'
+		ROLLBACK TRANSACTION
+	END CATCH
+
 COMMIT TRANSACTION
 GO
-
 

@@ -16,7 +16,7 @@ go
 
 --T1
 
-create proc sp_KhoaTaiKhoanNhanVien
+ALTER proc sp_KhoaTaiKhoanNhanVien
 
 	@taikhoan varchar(50)
 as
@@ -46,52 +46,52 @@ GO
 
 
 --T2
-create proc sp_DangNhapNhanVien
+	ALTER proc sp_DangNhapNhanVien
 
-	@taikhoan varchar(50),
-	@matkhau varchar(50)
-as
-SET TRAN ISOLATION LEVEL repeatable read
+		@taikhoan varchar(50),
+		@matkhau varchar(50)
+	as
+	SET TRAN ISOLATION LEVEL repeatable read
 
-begin transaction
-	begin try
-		IF NOT EXISTS (SELECT * FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
-		BEGIN
-				print 'khong ton tai tai khoan nay'
-				Rollback transaction
-				Return
-		END
-		IF 0 = (SELECT tknv.trangthai FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
-		BEGIN
-				print 'tai khoan nay bi khoa'
-				Rollback transaction
-				Return
-		END
+	begin transaction
+		begin try
+			IF NOT EXISTS (SELECT * FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
+			BEGIN
+					print 'khong ton tai tai khoan nay'
+					Rollback transaction
+					Return
+			END
+			IF 0 = (SELECT tknv.trangthai FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
+			BEGIN
+					print 'tai khoan nay bi khoa'
+					Rollback transaction
+					Return
+			END
 
 
-		IF @matkhau != (SELECT tknv.mk FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
-		BEGIN
-				print 'sai mat khau'
-				Rollback transaction
-				 Return
-		END
-		WAITFOR DELAY '0:0:10'
-	END TRY
-	BEGIN CATCH
-		print 'Loi he thong dang nhap nhan vien'
-		rollback transaction
-	END CATCH
-	print '-------Dang nhap thanh cong-------'
-	print '-Thong tin user'
-	Declare @tk varchar(50) 
-	Declare @mk varchar(50)
-	Declare @tt int
-	Set @tk = (SELECT tknv.id FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
-	Set @mk = (SELECT tknv.mk FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
-	Set @tt = (SELECT tknv.TRANGTHAI FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
-	Print '-- Tai Khoan: ' + @tk 
-	Print '-- Mat khau: ' + @mk 
-	Print '-- Trang thai: ' + cast(@tt as varchar(10))
-	COMMIT TRANSACTION
-GO
+			IF @matkhau != (SELECT tknv.mk FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
+			BEGIN
+					print 'sai mat khau'
+					Rollback transaction
+					 Return
+			END
+			WAITFOR DELAY '0:0:10'
+		END TRY
+		BEGIN CATCH
+			print 'Loi he thong dang nhap nhan vien'
+			rollback transaction
+		END CATCH
+		print '-------Dang nhap thanh cong-------'
+		print '-Thong tin user'
+		Declare @tk varchar(50) 
+		Declare @mk varchar(50)
+		Declare @tt int
+		Set @tk = (SELECT tknv.id FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
+		Set @mk = (SELECT tknv.mk FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
+		Set @tt = (SELECT tknv.TRANGTHAI FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
+		Print '-- Tai Khoan: ' + @tk 
+		Print '-- Mat khau: ' + @mk 
+		Print '-- Trang thai: ' + cast(@tt as varchar(10))
+		COMMIT TRANSACTION
+	GO
 

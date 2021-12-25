@@ -4,5 +4,5 @@ Go
 Select * from TKNHANVIEN
 select * from NHANVIEN
 
-EXEC DoiMatKhau'nhatcuongti', '123'
+EXEC DoiMatKhau 'NV81255', '123'
 GO

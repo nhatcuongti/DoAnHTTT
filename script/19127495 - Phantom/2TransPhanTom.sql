@@ -29,7 +29,9 @@ begin transaction
 		print 'Loi he thong xoa tai khoan nhan vien'
 		rollback transaction
 	END CATCH
+
 	DELETE FROM TKNhanVien WHERE id = @taikhoan
+
 	print 'xoa thanh cong'
 	COMMIT TRANSACTION
 GO
