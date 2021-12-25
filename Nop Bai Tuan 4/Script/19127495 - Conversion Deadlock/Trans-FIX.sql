@@ -13,7 +13,7 @@ values('nhatcuongti', '123456', 1, 'NV01')
 
 
 --Đổi mật khẩu
-CREATE PROC DoiMatKhau
+ALTER PROC DoiMatKhau
 	@ID varchar(50),
 	@MKMoi varchar(50)
 AS
@@ -21,7 +21,7 @@ BEGIN TRANSACTION
 SET TRAN ISOLATION LEVEL REPEATABLE READ
 	BEGIN TRY
 		--B1: Kiểm tra ID có tồn tại hay không
-		IF NOT EXISTS (select * from TKNHANVIEN  where ID = @ID)
+		IF NOT EXISTS (select * from TKNHANVIEN WITH (XLOCK)  where ID = @ID)
 		BEGIN
 			   PRINT N'Tài khoản này không tồn tại'
 			   ROLLBACK TRANSACTION
