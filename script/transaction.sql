@@ -514,9 +514,9 @@ BEGIN TRANSACTION
 		end		
 
 		--Kiểm tra Số Chi Nhánh DK có khác 0 hay không
-		if (@SOCHINHANHDK != 0)
+		if (@SOCHINHANHDK = 0)
 		begin
-			print N'Số chi nhánh khác 0 !'
+			print N'Số chi nhánh bằng 0 !'
 			ROLLBACK TRANSACTION
 			RETURN
 		end	
