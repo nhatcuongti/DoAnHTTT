@@ -1,10 +1,7 @@
 ﻿USE Nhom18_DoAnThucHanh_19HTT2_1
 GO
 
-INSERT INTO SANPHAM
-VALUES('SP01', N'Bánh mì', 10000)
 
-SELECT * FROM ChiNhanh
 
 --Tăng giá sản phẩm
 ALTER PROC insertNewBranchToContract
@@ -36,10 +33,7 @@ BEGIN TRANSACTION
 COMMIT TRANSACTION
 GO
 
-SELECT SOCHINHANHDK
-FROM HopDong WHERE MaDoanhNghiep =  '33847'
 
-SELECT HD.MaHD FROM ChiNhanh CN JOIN HopDong HD ON (CN.MAHOPDONG = HD.MaHD AND CN.MaDoanhNghiep = HD.MaDoanhNghiep)
 
 --Giảm giá sản phẩm
 alter PROC DELETE_CHINHANH
@@ -72,12 +66,7 @@ BEGIN TRANSACTION
 		PRINT N'UPDATE2 SUCCESS'
 
 		--Kiểm tra chi nhánh có tồn tại hay không
-		if (not exists(select * from ChiNhanh cn where cn.MaChiNhanh = @MACHINHANH and cn.MaDoanhNghiep = @MADOANHNGHIEP))
-		BEGIN
-			print N'Chi nhánh không tồn tại'
-			ROLLBACK TRANSACTION
-			RETURN
-		END		
+		
 		
 	END TRY
 	BEGIN CATCH
@@ -87,3 +76,4 @@ BEGIN TRANSACTION
 
 COMMIT TRANSACTION
 GO
+
