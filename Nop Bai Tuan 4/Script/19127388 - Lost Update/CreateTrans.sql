@@ -1,4 +1,4 @@
-﻿USE Nhom18_DoAnThucHanh
+﻿USE Nhom18_DoAnThucHanh_19HTT2_1
 GO
 
 INSERT INTO SANPHAM
@@ -36,6 +36,11 @@ BEGIN TRANSACTION
 COMMIT TRANSACTION
 GO
 
+SELECT SOCHINHANHDK
+FROM HopDong WHERE MaDoanhNghiep =  '33847'
+
+SELECT HD.MaHD FROM ChiNhanh CN JOIN HopDong HD ON (CN.MAHOPDONG = HD.MaHD AND CN.MaDoanhNghiep = HD.MaDoanhNghiep)
+
 --Giảm giá sản phẩm
 alter PROC DELETE_CHINHANH
 	@MACHINHANH VARCHAR(5),
@@ -44,15 +49,19 @@ AS
 BEGIN TRANSACTION
 	BEGIN TRY
 		DECLARE @SoChiNhanhDK int
-		set @SoChiNhanhDK = (Select SoChiNhanhDK from HopDong where MaDoanhNghiep = @MADOANHNGHIEP )
-		WAITFOR DELAY '00:00:05'
+		set @SoChiNhanhDK = (Select SoChiNhanhDK from HopDong where MaHD = @MAHOPDONG )
+
+
+		PRINT @SoChiNhanhDK
 
 		--Giảm số chi nhánh đăng kí
 		UPDATE HOPDONG
 		SET SoChiNhanhDK = @SoChiNhanhDK - 1
-		WHERE MaHD = (SELECT MAHOPDONG FROM CHINHANH CN WHERE CN.MaDoanhNghiep = @MADOANHNGHIEP AND CN.MaChiNhanh = @MACHINHANH) 
+		WHERE MaHD = (SELECT )
 
 		PRINT N'UPDATE1 SUCCESS'
+
+		SELECT * FROM ChiNhanh
 
 
 		DELETE ChiNhanh

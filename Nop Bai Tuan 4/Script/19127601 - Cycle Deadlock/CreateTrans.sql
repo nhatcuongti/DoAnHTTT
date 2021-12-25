@@ -33,15 +33,11 @@ SET TRAN ISOLATION LEVEL READ COMMITTED
 		WAITFOR DELAY '00:00:10'
 
 		
-		--43 : Xóa chi nhánh
+		--3 : Xóa chi nhánh
 		Delete ChiNhanh
 		where MaChiNhanh = @MaChiNhanh and MaDoanhNghiep = @MaDoanhNghiep
-
-
 		PRINT N'KHÔNG CẦN ĐỢI AI LUÔN'
 	
-
-
 COMMIT TRANSACTION
 GO
 

@@ -15,8 +15,7 @@ go
 
 --T1
 
-alter proc sp_KhoaTaiKhoanNhanVien
-
+CREATE proc sp_KhoaTaiKhoanNhanVien
 	@taikhoan varchar(50)
 as
 begin transaction
@@ -44,7 +43,7 @@ GO
 
 
 --T2
-alter proc sp_DangNhapNhanVien
+CREATE proc sp_DangNhapNhanVien
 
 	@taikhoan varchar(50),
 	@matkhau varchar(50)
@@ -93,5 +92,5 @@ begin transaction
 GO
 
 
-
+exec sp_DangNhapNhanVien 'NV81255', 'J9UJ56'
 select * from TKNHANVIEN

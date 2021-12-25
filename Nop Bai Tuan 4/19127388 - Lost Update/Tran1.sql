@@ -4,9 +4,7 @@ GO
 select * from ChiNhanh
 SELECT * FROM HopDong
 
-UPDATE HOPDONG
-SET SoChiNhanhDK = 2
-WHERE MaHD = '10'
+
 
 
 

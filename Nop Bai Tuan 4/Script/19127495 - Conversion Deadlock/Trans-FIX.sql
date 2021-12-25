@@ -49,7 +49,7 @@ GO
 
 
 --Cập nhật trạng thái nhân viên
-ALTER PROC CapNhatTrangThaiNV
+CREATE PROC CapNhatTrangThaiNV
 	@ID varchar(50),
 	@TrangThai int
 AS

@@ -1,4 +1,4 @@
-﻿USE Nhom18_DoAnThucHanh
+﻿USE Nhom18_DoAnThucHanh_19HTT2_1
 GO
 
 select * from ChiNhanh
@@ -20,3 +20,6 @@ VALUES('1', '33847', 9, 10, NULL)
 EXEC  insertNewBranchToContract '1' , '33847', '10' 
 
 SELECT * FROM SANPHAM
+
+SELECT * 
+FROM CHINHANH

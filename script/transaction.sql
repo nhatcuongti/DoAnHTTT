@@ -1094,7 +1094,7 @@ COMMIT TRANSACTION
 GO
 
 --insert account partner
-CREATE PROC insert_account_partner
+ALTER PROC insert_account_partner
 	@MASOTHUE VARCHAR(50),
 	@LOAIHANG VARCHAR(50),
 	@DIACHIKINHDOANH NVARCHAR(100), 
@@ -1120,3 +1120,173 @@ BEGIN TRANSACTION
 	END CATCH
 COMMIT TRANSACTION
 GO
+
+CREATE proc sp_DangNhapNhanVien
+
+		@taikhoan varchar(50),
+		@matkhau varchar(50)
+	as
+	SET TRAN ISOLATION LEVEL repeatable read
+
+	begin transaction
+		begin try
+			IF NOT EXISTS (SELECT * FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
+			BEGIN
+					print 'khong ton tai tai khoan nay'
+					Rollback transaction
+					Return
+			END
+			IF 0 = (SELECT tknv.trangthai FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
+			BEGIN
+					print 'tai khoan nay bi khoa'
+					Rollback transaction
+					Return
+			END
+
+
+			IF @matkhau != (SELECT tknv.mk FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
+			BEGIN
+					print 'sai mat khau'
+					Rollback transaction
+					 Return
+			END
+			WAITFOR DELAY '0:0:10'
+		END TRY
+		BEGIN CATCH
+			print 'Loi he thong dang nhap nhan vien'
+			rollback transaction
+		END CATCH
+		print '-------Dang nhap thanh cong-------'
+		print '-Thong tin user'
+		Declare @tk varchar(50) 
+		Declare @mk varchar(50)
+		Declare @tt int
+		Set @tk = (SELECT tknv.id FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
+		Set @mk = (SELECT tknv.mk FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
+		Set @tt = (SELECT tknv.TRANGTHAI FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
+		SELECT ID, MK, TRANGTHAI FROM TKNHANVIEN
+		WHERE ID = @taikhoan
+		COMMIT TRANSACTION
+	GO
+
+--Cập nhật trạng thái nhân viên
+CREATE PROC CapNhatTrangThaiNV
+	@ID varchar(50),
+	@TrangThai int
+AS
+SET TRAN ISOLATION LEVEL REPEATABLE READ
+BEGIN TRANSACTION
+	BEGIN TRY
+		--Kiểm tra @ID có tồn tại hay không ?
+		IF NOT EXISTS (SELECT * FROM TKNHANVIEN WHERE ID = @ID)
+		BEGIN
+			   PRINT N'Tài khoản này không tồn tại'
+			   ROLLBACK TRANSACTION
+			   RETURN 
+		END
+
+
+		--Cập nhật trạng thái của nhân viên
+		Update TKNHANVIEN
+		set TRANGTHAI = @TrangThai
+		where ID = @ID
+
+
+	END TRY
+	BEGIN CATCH
+		PRINT N'Lỗi hệ thống'
+		ROLLBACK TRANSACTION
+	END CATCH
+
+COMMIT TRANSACTION
+GO
+
+--Đổi mật khẩu
+CREATE PROC DoiMatKhau
+	@ID varchar(50),
+	@MKMoi varchar(50)
+AS
+BEGIN TRANSACTION
+SET TRAN ISOLATION LEVEL REPEATABLE READ
+	BEGIN TRY
+		--B1: Kiểm tra ID có tồn tại hay không
+		IF NOT EXISTS (select * from TKNHANVIEN WITH (XLOCK)  where ID = @ID)
+		BEGIN
+			   PRINT N'Tài khoản này không tồn tại'
+			   ROLLBACK TRANSACTION
+			   RETURN
+		END
+		WAITFOR DELAY '00:00:10'
+
+
+		--B2: Cập nhật mật khẩu
+		Update TKNHANVIEN
+		SET MK = @MKMoi
+		WHERE ID = @ID
+
+	
+
+	END TRY
+	BEGIN CATCH
+		ROLLBACK TRANSACTION
+		PRINT N'Lỗi hệ thống'
+		
+	END CATCH
+
+COMMIT TRANSACTION
+GO
+
+--Xóa tài khoản nhân viên
+CREATE proc sp_XoaTaiKhoanNhanVien
+	@taikhoan varchar(50)
+as
+SET TRAN ISOLATION LEVEL SERIALIZABLE
+begin transaction
+	begin try
+		IF NOT EXISTS (SELECT * FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
+		BEGIN
+				print 'khong ton tai tai khoan nay'
+				Rollback transaction
+				Return
+		END
+	END TRY
+	BEGIN CATCH
+		print 'Loi he thong xoa tai khoan nhan vien'
+		rollback transaction
+	END CATCH
+	DELETE FROM TKNhanVien WHERE id = @taikhoan
+	print 'xoa thanh cong'
+	COMMIT TRANSACTION
+GO
+
+--KhoaTaiKhoanNhanVien
+
+CREATE proc sp_KhoaTaiKhoanNhanVien
+
+	@taikhoan varchar(50)
+as
+SET TRAN ISOLATION LEVEL repeatable read
+begin transaction
+	begin try
+		IF NOT EXISTS (SELECT * FROM TKNhanVien tknv WHERE tknv.id = @taikhoan)
+		BEGIN
+				print 'khong ton tai tai khoan nay'
+				Rollback transaction
+				Return
+		END
+
+	END TRY
+	BEGIN CATCH
+		print 'Loi he thong khoa tai khoan nhan vien'
+		rollback transaction
+	END CATCH
+
+	UPDATE TKNhanVien
+	SET trangthai =  0
+	WHERE id = @taikhoan;
+
+	print 'Khoa tai khoan nhan vien thanh cong'
+	COMMIT TRANSACTION
+GO
+
+SELECT * FROM TKNHANVIEN
