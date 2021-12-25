@@ -37,6 +37,7 @@ BEGIN TRANSACTION
 		--Kiểm tra HIỆU LỰC CÓ KHÁC 0 HAY KHÔNG
 		if (@HIEULUC < 0)
 		begin
+			select 1
 			print N'Hiệu lực không thể là số âm'
 			rollback transaction
 			return
