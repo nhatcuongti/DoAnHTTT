@@ -1,5 +1,5 @@
-﻿SELECT 'DROP PROCEDURE [' + SCHEMA_NAME(p.schema_id) + '].[' + p.NAME + '];'
-FROM sys.procedures p 
+﻿--SELECT 'DROP PROCEDURE [' + SCHEMA_NAME(p.schema_id) + '].[' + p.NAME + '];'
+--FROM sys.procedures p 
 
 USE Nhom18_DoAnThucHanh_19HTT2_1
 GO
@@ -14,7 +14,7 @@ CREATE PROC INSERT_CHINHANH
 AS
 BEGIN TRANSACTION
 	BEGIN TRY
-		--Kiểm tra @MaDoanhNghiep có tồn tại hay không ?
+		--Kiểm tra @MaDoanhNghiep có tồn tại hay không ?	
 		if (NOT EXISTS(Select * from DoanhNghiep dn where @MADOANHNGHIEP = dn.MaSoThue ))
 		Begin
 			Print N'Không tồn tại mã doanh nghiệp'

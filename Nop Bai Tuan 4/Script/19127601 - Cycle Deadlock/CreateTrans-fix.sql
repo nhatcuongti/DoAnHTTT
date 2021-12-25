@@ -1,28 +1,12 @@
 ﻿Use Nhom18_DoAnThucHanh_19HTT2_1
 Go
 
-	Select * from DoanhNghiep
-	Select * from HopDong
-	Select * from ChiNhanh
-
-Insert into DoanhNghiep
-values('MST01', 'Dien Thoai', N'Bình Phước', 'Quan 5', 'FPT', N'Nguyễn Văn B', N'Đồng Xoài', '0909845284', 'nhatcuongti@gmail.com', 50)
-go
-
-Insert into HopDong
-values('HD01', N'Nhật Hào', 0, 6, 0.3, '2021-05-27', 'MST01')
-go
-
-Insert into ChiNhanh
-values('CN01', 'MST01', 'Bình phước', 0, 'HD01')
-go
-
 ALTER PROC XoaChiNhanh
 	@MaChiNhanh varchar(50),
     @MaDoanhNghiep varchar(50)
 AS
 BEGIN TRANSACTION
-SET TRAN ISOLATION LEVEL REPEATABLE READ
+SET TRAN ISOLATION LEVEL READ COMMITTED
 	BEGIN TRY
 		--B1: Kiểm tra Chi nhánh có tồn tịa hay không
 		IF NOT EXISTS (select * from ChiNhanh where MaChiNhanh = @MaChiNhanh and MaDoanhNghiep = @MaDoanhNghiep)
@@ -43,9 +27,15 @@ SET TRAN ISOLATION LEVEL REPEATABLE READ
 		where MaHD = @MaHD
 		WAITFOR DELAY '00:00:10'
 
-		--43 : Xóa chi nhánh
+		--B4 : Xóa chi nhánh
 		Delete ChiNhanh
 		where MaChiNhanh = @MaChiNhanh and MaDoanhNghiep = @MaDoanhNghiep
+	
+		
+
+		print N'Chạy hết nhá'
+
+
 	
 
 	END TRY
@@ -58,13 +48,13 @@ SET TRAN ISOLATION LEVEL REPEATABLE READ
 COMMIT TRANSACTION
 GO
 
-CREATE PROC XoaChiNhanhKhoiHopDong
+ALTER PROC XoaChiNhanhKhoiHopDong
 	@MaChiNhanh varchar(50),
     @MaDoanhNghiep varchar(50)
 AS
 BEGIN TRANSACTION
-SET TRAN ISOLATION LEVEL REPEATABLE READ
-	BEGIN TRY
+SET TRAN ISOLATION LEVEL READ COMMITTED
+
 		--B1: Kiểm tra Chi nhánh có tồn tịa hay không
 		IF NOT EXISTS (select * from ChiNhanh where MaChiNhanh = @MaChiNhanh and MaDoanhNghiep = @MaDoanhNghiep)
 		BEGIN
@@ -78,23 +68,29 @@ SET TRAN ISOLATION LEVEL REPEATABLE READ
 		DECLARE @MaHD as varchar(50)
 		Set @MaHD = (Select MAHOPDONG from ChiNhanh where @MaChiNhanh = MaChiNhanh and MaDoanhNghiep = @MaDoanhNghiep)
 
-
-		--B3 : Xóa chi nhánh khỏi hợp đồng
-		Update  ChiNhanh
-		Set MAHOPDONG = NULL
-		Where MaChiNhanh = @MaChiNhanh and @MaDoanhNghiep = MaDoanhNghiep
-
-		--B4 : Giảm đơn vị chi nhánh trong hợp đồng
+		--B3 : Giảm đơn vị chi nhánh trong hợp đồng
 		Update HopDong
 		Set SoChiNhanhDK = SoChiNhanhDK - 1
 		Where MaHD = @MaHD
 
-	END TRY
-	BEGIN CATCH
-		ROLLBACK TRANSACTION
-		PRINT N'Lỗi hệ thống'
-		
-	END CATCH
+		print N'Chạy ở B3'
+
+		if not exists (SELECT * FROM ChiNhanh WHERE MaChiNhanh = @MaChiNhanh and @MaDoanhNghiep = MaDoanhNghiep )
+		BEGIN
+			PRINT N'Chi nhánh không tồn tại'
+			ROLLBACK TRANSACTION
+			RETURN
+		END		
+
+
+		--B4 : Xóa chi nhánh khỏi hợp đồng
+		Update  ChiNhanh
+		Set MAHOPDONG = NULL
+		Where MaChiNhanh = @MaChiNhanh and @MaDoanhNghiep = MaDoanhNghiep
+
+		print N'Chạy ở B4'
+
+
 
 COMMIT TRANSACTION
 GO

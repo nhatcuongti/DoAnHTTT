@@ -1,20 +1,8 @@
 ﻿Use Nhom18_DoAnThucHanh_19HTT2_1
 Go
 
-	Select * from DoanhNghiep
-	Select * from HopDong
-	Select * from ChiNhanh
-
-Insert into DoanhNghiep
-values('MST01', 'Dien Thoai', N'Bình Phước', 'Quan 5', 'FPT', N'Nguyễn Văn B', N'Đồng Xoài', '0909845284', 'nhatcuongti@gmail.com', 50)
-go
-
-Insert into HopDong
-values('HD01', N'Nhật Hào', 0, 6, 0.3, '2021-05-27', 'MST01')
-go
-
 Insert into ChiNhanh
-values('CN01', 'MST01', 'Bình phước', 0, 'HD01')
+values('CN01', '33847', '9', 0, '10')
 go
 
 ALTER PROC XoaChiNhanh
@@ -22,8 +10,8 @@ ALTER PROC XoaChiNhanh
     @MaDoanhNghiep varchar(50)
 AS
 BEGIN TRANSACTION
-SET TRAN ISOLATION LEVEL REPEATABLE READ
-	BEGIN TRY
+SET TRAN ISOLATION LEVEL READ COMMITTED
+
 		--B1: Kiểm tra Chi nhánh có tồn tịa hay không
 		IF NOT EXISTS (select * from ChiNhanh where MaChiNhanh = @MaChiNhanh and MaDoanhNghiep = @MaDoanhNghiep)
 		BEGIN
@@ -36,6 +24,7 @@ SET TRAN ISOLATION LEVEL REPEATABLE READ
 		DECLARE @MaHD as varchar(50)
 		Set @MaHD = (Select MAHOPDONG from ChiNhanh where @MaChiNhanh = MaChiNhanh and MaDoanhNghiep = @MaDoanhNghiep)
 
+		print 'hello'
 
 		--B3: Giảm số chi nhánh đăng kí trong hợp đồng
 		Update HopDong
@@ -43,27 +32,25 @@ SET TRAN ISOLATION LEVEL REPEATABLE READ
 		where MaHD = @MaHD
 		WAITFOR DELAY '00:00:10'
 
+		
 		--43 : Xóa chi nhánh
 		Delete ChiNhanh
 		where MaChiNhanh = @MaChiNhanh and MaDoanhNghiep = @MaDoanhNghiep
+
+
+		PRINT N'KHÔNG CẦN ĐỢI AI LUÔN'
 	
 
-	END TRY
-	BEGIN CATCH
-		ROLLBACK TRANSACTION
-		PRINT N'Lỗi hệ thống'
-		
-	END CATCH
 
 COMMIT TRANSACTION
 GO
 
-CREATE PROC XoaChiNhanhKhoiHopDong
+ALTER PROC XoaChiNhanhKhoiHopDong
 	@MaChiNhanh varchar(50),
     @MaDoanhNghiep varchar(50)
 AS
 BEGIN TRANSACTION
-SET TRAN ISOLATION LEVEL REPEATABLE READ
+SET TRAN ISOLATION LEVEL READ COMMITTED
 	BEGIN TRY
 		--B1: Kiểm tra Chi nhánh có tồn tịa hay không
 		IF NOT EXISTS (select * from ChiNhanh where MaChiNhanh = @MaChiNhanh and MaDoanhNghiep = @MaDoanhNghiep)
@@ -76,7 +63,8 @@ SET TRAN ISOLATION LEVEL REPEATABLE READ
 
 		--B2: Lấy MaHD
 		DECLARE @MaHD as varchar(50)
-		Set @MaHD = (Select MAHOPDONG from ChiNhanh where @MaChiNhanh = MaChiNhanh and MaDoanhNghiep = @MaDoanhNghiep)
+		Set @MaHD = (Select MAHOPDONG from ChiNhanh WITH (NOLOCK) where @MaChiNhanh = MaChiNhanh and MaDoanhNghiep = @MaDoanhNghiep)
+		PRINT N'READ MAHD'
 
 
 		--B3 : Xóa chi nhánh khỏi hợp đồng
@@ -84,10 +72,14 @@ SET TRAN ISOLATION LEVEL REPEATABLE READ
 		Set MAHOPDONG = NULL
 		Where MaChiNhanh = @MaChiNhanh and @MaDoanhNghiep = MaDoanhNghiep
 
+		PRINT N'cOMPLETE UPDATE CHINHANH'
+
 		--B4 : Giảm đơn vị chi nhánh trong hợp đồng
 		Update HopDong
 		Set SoChiNhanhDK = SoChiNhanhDK - 1
 		Where MaHD = @MaHD
+
+		PRINT N'ĐỢI Ở ĐÂY'
 
 	END TRY
 	BEGIN CATCH

@@ -1,7 +1,7 @@
-﻿Use Nhom18_DoAnThucHanh
+﻿Use Nhom18_DoAnThucHanh_19HTT2_1
 Go
 
 SELECT * FROM ChiNhanh
 
-EXEC XoaChiNhanhKhoiHopDong 'CN01', 'MST01'
+EXEC XoaChiNhanhKhoiHopDong '1', '38549'
 GO
