@@ -1,4 +1,7 @@
-﻿CREATE PROC INSERT_HOPDONG
+﻿USE Nhom18_DoAnThucHanh_19HTT2_1
+GO
+
+ALTER PROC INSERT_HOPDONG
 	@MAHD VARCHAR(50),
 	@NGUOIDAIDIEN NVARCHAR(50),
 	@SOCHINHANHDK INT,
@@ -9,12 +12,6 @@
 AS
 BEGIN TRANSACTION
 	BEGIN TRY
-		INSERT INTO HOPDONG
-		VALUES(@MAHD, @NGUOIDAIDIEN, @SOCHINHANHDK, @HIEULUC, @PHANTRAMHH, @NGAYBATDAU, @MADOANHNGHIEP, 1)
-
-		WAITFOR DELAY '00:00:05'
-
-
 		--Kiểm tra MaHD đã tồn tại chưa
 		if (exists(select * from hopdong where @mahd = MaHD))
 		begin
@@ -23,13 +20,11 @@ BEGIN TRANSACTION
 			RETURN
 		end		
 
-		--Kiểm tra Số Chi Nhánh DK có khác 0 hay không
-		if (@SOCHINHANHDK != 0)
-		begin
-			print N'Số chi nhánh khác 0 !'
-			ROLLBACK TRANSACTION
-			RETURN
-		end	
+		INSERT INTO HOPDONG
+		VALUES(@MAHD, @NGUOIDAIDIEN, @SOCHINHANHDK, @HIEULUC, @PHANTRAMHH, @NGAYBATDAU, @MADOANHNGHIEP, 1)
+
+		WAITFOR DELAY '00:00:05'
+
 
 		--PHANTRAMHH CÓ NẰM TRONG KHOẢNG (0, 1) HAY KHÔNG
 		if (@PHANTRAMHH > 1 or @PHANTRAMHH < 0)
@@ -40,9 +35,9 @@ BEGIN TRANSACTION
 		end	
 
 		--Kiểm tra HIỆU LỰC CÓ KHÁC 0 HAY KHÔNG
-		if (@HIEULUC = 0)
+		if (@HIEULUC < 0)
 		begin
-			print N'Hiệu lực không thể bằng 0'
+			print N'Hiệu lực không thể là số âm'
 			rollback transaction
 			return
 		end	
@@ -71,12 +66,13 @@ BEGIN TRANSACTION
 COMMIT TRANSACTION
 GO
 
-CREATE PROC viewAllContract
+ALTER PROC viewAllContract
 AS
 BEGIN TRANSACTION
+SET TRAN ISOLATION LEVEL READ UNCOMMITTED
 	BEGIN TRY
-		SELECT HD.MaHD, DN.TenDoanhNghiep, HD.NgayBatDau, HD.HieuLuc, HD.DangGiaHan FROM HOPDONG HD JOIN DOANHNGHIEP DN ON HD.MaDoanhNghiep = DN.MaSoThue
-		WAITFOR DELAY '00:00:05'
+		SELECT HD.MaHD, DN.TenDoanhNghiep, HD.NgayBatDau, HD.HieuLuc, HD.DangGiaHan  
+		FROM HOPDONG HD WITH(NOLOCK) JOIN DOANHNGHIEP DN WITH(NOLOCK) ON HD.MaDoanhNghiep = DN.MaSoThue 
 	END TRY			
 	BEGIN CATCH
 		PRINT N'Lỗi hệ thống'
@@ -85,10 +81,3 @@ BEGIN TRANSACTION
 COMMIT TRANSACTION
 GO
 
-
-
-select * from HopDong
-
-UPDATE HopDong
-SET HieuLuc = -1
-WHERE MaHD = '0'
